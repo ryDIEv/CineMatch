@@ -1,0 +1,35 @@
+# Секреты
+.env
+*.env
+!.env.example
+
+# Локальная база данных и логи
+storage/*
+!storage/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# IDE и ОС
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
