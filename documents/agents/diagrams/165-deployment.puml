@@ -1,0 +1,15 @@
+@startuml
+!include _style.iuml
+title Размещение модуля ИИ-агентов
+node "Компьютер пользователя\n(Docker Compose)" {
+  node "Контейнер backend" {
+    artifact "API-слой (FastAPI)" as api
+    artifact "Модуль ИИ-агентов" as ag
+    artifact "Модуль данных" as data
+  }
+}
+cloud "OpenRouter" as or
+api --> ag : вызов функции
+ag --> data : вызов функции
+ag --> or : HTTPS
+@enduml

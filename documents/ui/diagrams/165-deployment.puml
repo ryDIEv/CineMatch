@@ -1,0 +1,28 @@
+@startuml
+!include _style.iuml
+title Развёртывание (Docker Compose)
+node "Компьютер пользователя" {
+  node "Docker Compose: cinematch" {
+    node "frontend\nnginx:alpine\nпорт 8080" as fe {
+      artifact "Сборка веб-приложения" as app
+    }
+    node "backend\npython:3.12-slim\nпорт 8000 (внутренний)" as be {
+      artifact "API-слой + модули\nагентов и данных" as api
+    }
+    folder "Том data" as vol
+  }
+  file ".env\n(OPENROUTER_API_KEY,\nTMDB_API_KEY)" as env
+  node "Браузер" as br
+}
+cloud "OpenRouter" as or
+cloud "TMDB / image.tmdb.org" as tmdb
+cloud "Open-Meteo" as om
+br --> fe : http://localhost:8080
+fe --> be : /api (прокси)
+be --> vol : cinematch.db
+be ..> env
+be --> or : HTTPS
+be --> tmdb : HTTPS (загрузка каталога)
+be --> om : HTTPS
+br --> tmdb : HTTPS (постеры)
+@enduml

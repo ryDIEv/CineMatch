@@ -1,0 +1,38 @@
+@startuml
+!include _style.iuml
+title Компоненты модуля ИИ-агентов
+component "API-слой\n(модуль интерфейса)" as API
+package "Модуль ИИ-агентов" {
+  component "Оркестратор\nhandle_user_turn" as O
+  component "Классификатор\nнамерений" as IC
+  component "Защита диалога\n(проверка ввода и\nответов по схеме)" as G
+  component "Агент-распознаватель\nсостояния" as SA
+  component "Агент-рекомендатель" as RA
+  component "Агент-компаньон" as CA
+  component "Реестр инструментов" as TR
+  component "Клиент LLM" as L
+  component "Промпты" as P
+  component "Трасса решений" as TT
+}
+component "Модуль данных" as DATA
+cloud "OpenRouter" as OR
+API --> O
+O --> IC
+O --> G
+O --> SA
+O --> RA
+O --> CA
+O --> TT
+IC --> L
+SA --> L
+RA --> L
+CA --> L
+SA --> TR
+RA --> TR
+CA --> TR
+TR --> TT
+L ..> P
+L --> OR : HTTPS
+TR --> DATA : инструменты
+O --> DATA : служебные\nфункции
+@enduml

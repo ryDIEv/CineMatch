@@ -1,0 +1,14 @@
+@startuml
+!include _style.iuml
+title Контекст модуля ИИ-агентов
+actor "Пользователь" as user
+component "Модуль интерфейса\n(веб-приложение, API)" as ui
+component "Модуль ИИ-агентов" as ag #E8F0FE
+component "Модуль данных" as data
+cloud "OpenRouter\n(LLM API)" as llm
+user --> ui : сообщения
+ui --> ag : handle_user_turn()
+ag --> ui : AgentResponse
+ag --> data : инструменты и\nслужебные функции
+ag --> llm : HTTPS, tool use
+@enduml

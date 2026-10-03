@@ -1,0 +1,58 @@
+@startuml
+!include _style.iuml
+title Классы модуля интерфейса
+hide empty methods
+package "Веб-приложение (TypeScript)" {
+  class ChatScreen {
+    messages : Message[]
+    send(text)
+    pickMovie(card)
+  }
+  class MovieTicket {
+    movie : MovieCard
+    disabled : bool
+  }
+  class TraceDetails {
+    steps : AgentTrace[]
+  }
+  class HistoryScreen
+  class DataScreen {
+    changeCity(name)
+    deleteData()
+  }
+  class ApiClient {
+    getSession()
+    streamMessage(text)
+    getHistory()
+    updateSettings()
+    deleteMe()
+  }
+}
+package "API-слой (Python)" {
+  class ChatRouter {
+    POST /messages (SSE)
+  }
+  class SessionRouter {
+    GET /session
+  }
+  class MeRouter {
+    GET /history
+    PUT /settings
+    DELETE /me
+  }
+  class CurrentUser {
+    resolve() : user_id
+  }
+}
+ChatScreen *-- MovieTicket
+ChatScreen *-- TraceDetails
+ChatScreen --> ApiClient
+HistoryScreen --> ApiClient
+DataScreen --> ApiClient
+ApiClient ..> ChatRouter : HTTP
+ApiClient ..> SessionRouter : HTTP
+ApiClient ..> MeRouter : HTTP
+ChatRouter --> CurrentUser
+SessionRouter --> CurrentUser
+MeRouter --> CurrentUser
+@enduml

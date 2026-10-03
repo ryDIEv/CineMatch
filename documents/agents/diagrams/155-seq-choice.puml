@@ -1,0 +1,30 @@
+@startuml
+!include _style.iuml
+title Выбор фильма и оценка при следующем визите
+participant "API-слой" as API
+participant "Оркестратор" as O
+participant "Рекомендатель" as RA
+participant "Компаньон" as CA
+participant "OpenRouter" as M
+participant "Модуль данных" as D
+API -> O : handle_user_turn("Выбираю «Двое и собака»")
+O -> RA : реакция на подборку
+RA -> M : классификация реакции
+M --> RA : select, фильм 2
+RA --> O : select(movie_id)
+O -> D : save_choice(user_id, movie_id)
+O --> API : AgentResponse(confirmation)
+== Следующий визит ==
+API -> O : handle_user_turn("/start")
+O -> D : get_pending_feedback(user_id)
+D --> O : «Двое и собака»
+O -> CA : начать опрос
+CA --> API : «Как вам фильм? На сколько из 10?»
+API -> O : handle_user_turn("на восьмёрку")
+O -> CA : ответ
+CA -> M : интерпретация ответа
+M --> CA : tool_use save_rating(movie_id, 8)
+CA -> D : save_rating(...)
+D --> CA : ok
+CA --> API : «Записал: 8 из 10»
+@enduml

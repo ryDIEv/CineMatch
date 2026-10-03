@@ -1,0 +1,25 @@
+@startuml
+!include _style.iuml
+left to right direction
+title Варианты использования (MVP)
+actor "Пользователь" as U
+rectangle "CineMatch: модуль ИИ-агентов" {
+  usecase "UC-1 Принять соглашение\nо данных" as UC1
+  usecase "UC-2 Указать город" as UC2
+  usecase "UC-3 Получить\nрекомендацию" as UC3
+  usecase "UC-4 Отреагировать\nна подборку" as UC4
+  usecase "UC-5 Оценить выбранный\nфильм" as UC5
+  usecase "UC-6 Отметить\nпросмотренный фильм" as UC6
+  usecase "UC-7 Удалить мои данные" as UC7
+  usecase "UC-8 Получить отказ на\nзапрос не по теме" as UC8
+}
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC5
+U --> UC6
+U --> UC7
+UC4 .> UC3 : <<extend>>
+UC3 .> UC2 : <<include>>
+UC8 .> UC3 : <<extend>>
+@enduml

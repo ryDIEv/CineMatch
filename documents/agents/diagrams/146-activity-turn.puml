@@ -1,0 +1,34 @@
+@startuml
+!include _style.iuml
+title Ход оркестратора: обработка одного сообщения
+start
+:handle_user_turn(user_id, message);
+:Загрузить настройки и сессию;
+if (Согласие принято?) then (нет)
+  :Этап consent;
+elseif (Город указан?) then (нет)
+  :Этап onboarding;
+elseif (Сессия на этапе диалога?) then (да)
+  :Агент текущего этапа;
+elseif (Начало визита и есть\nневыставленная оценка?) then (да)
+  :Агент-компаньон;
+else (этап idle)
+  :Классифицировать намерение\n(LLM, ответ из перечня);
+  switch (Намерение)
+  case (recommend)
+    :Агент-распознаватель;
+  case (watched)
+    :Агент-компаньон;
+  case (settings)
+    :Смена города;
+  case (delete_data)
+    :Подтверждение и удаление;
+  case (off_topic)
+    :Вежливый отказ;
+  endswitch
+endif
+:Проверить ответ по JSON-схеме;
+:Сохранить сессию, записать трассу;
+:Вернуть AgentResponse;
+stop
+@enduml

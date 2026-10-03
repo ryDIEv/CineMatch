@@ -1,0 +1,11 @@
+@startuml
+!include _style.iuml
+title Жизненный цикл данных пользователя
+[*] --> unregistered : первый визит
+unregistered --> consented : save_consent
+consented --> active : город сохранён
+active --> active : оценки, выборы,\nсессии
+active --> deleted : delete_user_data
+consented --> deleted : delete_user_data
+deleted --> [*] : записи удалены\nкаскадно
+@enduml

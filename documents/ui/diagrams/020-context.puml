@@ -1,0 +1,15 @@
+@startuml
+!include _style.iuml
+title Контекст модуля интерфейса
+actor "Пользователь" as u
+node "Браузер" as br
+component "Модуль интерфейса\n(веб-приложение, API-слой,\nDocker Compose)" as ui #E8F0FE
+component "Модуль ИИ-агентов" as ag
+component "Модуль данных" as data
+cloud "image.tmdb.org\n(постеры)" as img
+u --> br
+br --> ui : HTTP localhost:8080\nREST + SSE
+br --> img : HTTPS, изображения
+ui --> ag : handle_user_turn()
+ui --> data : история, настройки,\nудаление данных
+@enduml
