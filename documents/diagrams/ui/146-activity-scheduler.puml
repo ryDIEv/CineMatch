@@ -1,0 +1,23 @@
+@startuml
+!include _style.iuml
+title Такт планировщика отправки
+start
+:Таймер: раз в минуту;
+:get_due_reminders(now);
+while (Есть напоминания?) is (да)
+  :Сформировать текст по виду\n(rate_movie, custom, release);
+  :sendMessage (не чаще 25 сообщений/с);
+  if (Результат) then (успех)
+    :mark_reminder_sent;
+  elseif (403: бот заблокирован) then
+    :cancel_reminder;
+  else (сетевая ошибка)
+    :Оставить scheduled,\nповтор в следующем такте;
+  endif
+endwhile (нет)
+if (Наступило 10:00 по UTC?) then (да)
+  :check_releases;
+  :purge_expired;
+endif
+stop
+@enduml

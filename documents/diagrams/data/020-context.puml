@@ -1,0 +1,17 @@
+@startuml
+!include _style.iuml
+title Контекст модуля данных
+component "Модуль ИИ-агентов" as ag
+component "Модуль интерфейса\n(планировщик отправки,\nадминистрирование)" as ui
+actor "Сопровождающий\n(участник команды)" as op
+component "Модуль данных" as data #E8F0FE
+database "SQLite\ndatabase.db" as db
+cloud "TMDB API" as tmdb
+cloud "Open-Meteo\n(геокодинг, погода)" as om
+ag --> data : инструменты,\nслужебные функции
+ui --> data : напоминания к отправке,\nстатистика
+op --> data : запуск загрузки\nкаталога
+data --> db : SQL
+data --> tmdb : HTTPS
+data --> om : HTTPS
+@enduml

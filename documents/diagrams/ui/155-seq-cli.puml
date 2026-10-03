@@ -1,0 +1,23 @@
+@startuml
+!include _style.iuml
+title Ход диалога в консоли
+actor "Пользователь" as U
+participant "CliApp" as C
+participant "CliRenderer" as R
+participant "Модуль агентов" as AG
+U -> C : ввод «2» или «беру второй»
+C -> C : проверка ввода
+alt введён номер варианта
+  C -> C : номер → текст варианта из options
+end
+C -> R : индикатор «Подбираю…»
+C -> AG : handle_user_turn(cli:local, cli, текст)
+alt ответ получен
+  AG --> C : AgentResponse
+  C -> R : render(response)
+  R --> U : текст, карточки, варианты
+else исключение или таймаут 60 с
+  C -> R : render(type=error)
+  R --> U : «Не удалось получить ответ. Повторите ввод»
+end
+@enduml

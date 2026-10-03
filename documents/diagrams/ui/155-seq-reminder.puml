@@ -1,0 +1,22 @@
+@startuml
+!include _style.iuml
+title Доставка напоминания
+participant "ReminderDispatcher" as RD
+participant "Модуль данных" as D
+participant "TelegramRenderer" as R
+participant "Telegram" as TG
+actor "Пользователь" as U
+RD -> D : get_due_reminders(now)
+D --> RD : [rate_movie: «Дюна», 21:40]
+RD -> R : текст напоминания + варианты
+R -> TG : sendMessage
+alt доставлено
+  TG --> U : «Как вам "Дюна"? Оцените от 1 до 10»
+  RD -> D : mark_reminder_sent
+else 403 Forbidden (бот заблокирован)
+  TG --> RD : ошибка 403
+  RD -> D : cancel_reminder
+end
+U -> TG : «на восьмёрку»
+note over TG, U : дальше — обычный ход диалога\n(агент-компаньон)
+@enduml

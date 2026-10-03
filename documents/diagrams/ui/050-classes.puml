@@ -1,0 +1,52 @@
+@startuml
+!include _style.iuml
+title Классы модуля интерфейса
+hide empty members
+interface ResponseRenderer {
+  render(response: AgentResponse)
+}
+class CliRenderer {
+  render(response)
+  print_card(movie)
+  print_options(options)
+}
+class TelegramRenderer {
+  render(response)
+  build_keyboard(options)
+  format_card(movie)
+}
+class CliApp {
+  user_id : str
+  debug : bool
+  run()
+  read_input() : str
+}
+class BotHandlers {
+  on_message(msg)
+  on_callback(query)
+  on_command(cmd)
+}
+class ReminderDispatcher {
+  interval : 60 s
+  tick()
+  deliver(reminder)
+}
+class AdminCommands {
+  admin_ids : set
+  stats()
+}
+class "AgentResponse\n(контракт модуля агентов)" as AR {
+  type : str
+  text : str
+  options : list[str]
+  movies : list[MovieCard]
+}
+ResponseRenderer <|.. CliRenderer
+ResponseRenderer <|.. TelegramRenderer
+CliApp --> CliRenderer
+BotHandlers --> TelegramRenderer
+ReminderDispatcher --> TelegramRenderer
+BotHandlers --> AdminCommands
+CliRenderer ..> AR
+TelegramRenderer ..> AR
+@enduml

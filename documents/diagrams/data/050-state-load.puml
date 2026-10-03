@@ -1,0 +1,11 @@
+@startuml
+!include _style.iuml
+title Жизненный цикл загрузки каталога
+[*] --> running : ingest_movies()
+running --> completed : все страницы\nобработаны
+running --> partial : прервано (лимит,\nсеть), часть сохранена
+running --> failed : ошибка 401\nили БД
+partial --> running : повторный запуск\n(продолжение)
+completed --> [*]
+failed --> [*]
+@enduml
