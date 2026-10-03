@@ -1,0 +1,26 @@
+@startuml
+!include _style.iuml
+title Развёртывание модуля данных
+node "Компьютер разработчика" {
+  artifact "Модуль данных\n(в процессе консоли)" as d1
+  artifact "Скрипт загрузки\nкаталога" as l1
+  database "database.db\n(локальная копия)" as db1
+}
+node "Сервер (этап Telegram-бота)" {
+  artifact "Модуль данных\n(в процессе бота)" as d2
+  artifact "Скрипт загрузки\nкаталога (cron)" as l2
+  database "database.db" as db2
+  folder "backups/\n(ежедневная копия, 7 дней)" as bk
+}
+cloud "TMDB API" as tmdb
+cloud "Open-Meteo" as om
+d1 --> db1
+l1 --> db1
+l1 --> tmdb : HTTPS
+d1 --> om : HTTPS
+d2 --> db2
+l2 --> db2
+l2 --> tmdb : HTTPS
+d2 --> om : HTTPS
+db2 ..> bk : sqlite backup API
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+!include _style.iuml
+title Загрузка каталога из TMDB
+start
+:Создать запись catalog_loads (running);
+:Загрузить справочник жанров\n(genre/movie/list);
+repeat
+  :discover/movie, страница N;
+  repeat :Для каждого фильма страницы;
+    :movie/{id} + credits + release_dates\n(append_to_response);
+    if (Ответ 429?) then (да)
+      :Пауза с увеличением, повтор\n(не более 5 раз);
+    elseif (Ответ 404?) then (да)
+      :Пропустить, записать в журнал;
+    else (200)
+      :Нормализация: год, жанры,\n10 актёров, возрастная маркировка;
+    endif
+  repeat while (Есть ещё фильмы на странице?) is (да)
+  :Транзакция: UPSERT фильмов,\nжанров, актёров, связей;
+  :Сохранить last_page;
+repeat while (Есть следующая страница\nи не достигнут max_pages?) is (да)
+:catalog_loads → completed;
+stop
+@enduml

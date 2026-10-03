@@ -1,0 +1,38 @@
+@startuml
+!include _style.iuml
+title Обработка обновления Telegram
+start
+:Получить обновление (long polling);
+if (Личный чат?) then (нет)
+  :Игнорировать;
+  stop
+endif
+switch (Тип обновления)
+case (callback — нажата кнопка)
+  :Найти текст кнопки по индексу\nв reply_markup сообщения;
+  if (Сообщение актуально?) then (нет)
+    :answerCallbackQuery\n«Вариант устарел»;
+    stop
+  endif
+  :Снять кнопки с сообщения;
+  :Текст кнопки = сообщение пользователя;
+case (команда)
+  if (/stats и не администратор?) then (да)
+    :Ответить как на неизвестную команду;
+    stop
+  endif
+  :Команда = сообщение пользователя\n(/start, /help, /new, /settings, /delete);
+case (текст)
+  if (Пустое или > 1000 символов?) then (да)
+    :Подсказка без вызова агентов;
+    stop
+  endif
+case (стикер, фото, голос)
+  :Подсказка «отправьте текст»;
+  stop
+endswitch
+:sendChatAction(typing);
+:handle_user_turn(tg:id, telegram, текст)\nв отдельном потоке;
+:Отобразить AgentResponse;
+stop
+@enduml

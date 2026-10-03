@@ -1,0 +1,10 @@
+@startuml
+!include _style.iuml
+title Жизненный цикл сообщения бота с кнопками
+[*] --> active : отправлено с кнопками
+active --> answered : нажата кнопка или\nпришёл текстовый ответ
+answered --> [*] : кнопки сняты\n(editMessageReplyMarkup)
+active --> outdated : пришло новое сообщение\nс кнопками
+outdated --> outdated : нажатие → «Вариант\nустарел»
+outdated --> [*]
+@enduml

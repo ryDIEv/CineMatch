@@ -1,0 +1,10 @@
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName "DejaVu Sans"
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #444444
+skinparam componentStyle uml2
+skinparam roundcorner 8
+skinparam nodesep 40
+skinparam ranksep 50

@@ -1,0 +1,36 @@
+@startuml
+!include _style.iuml
+title Компоненты модуля данных
+component "Модуль ИИ-агентов" as AG
+component "Модуль интерфейса" as UI
+actor "Сопровождающий" as OP
+package "Модуль данных" {
+  component "Фасад функций\n(инструменты и\nслужебные функции)" as F
+  component "Репозитории\n(каталог, пользователи,\nнапоминания, сессии)" as R
+  component "Расчёт профиля\nпредпочтений" as PR
+  component "Скрипт загрузки\nкаталога" as L
+  component "Проверка новинок\nпо подпискам" as RC
+  component "Клиент TMDB\n(лимит частоты, повторы)" as T
+  component "Клиент Open-Meteo\n(кэш 30 мин)" as W
+  component "Подключение к БД\n(WAL, foreign_keys,\nмиграции)" as C
+}
+database "database.db" as DB
+cloud "TMDB API" as TMDB
+cloud "Open-Meteo" as OM
+AG --> F
+UI --> F
+OP --> L
+F --> R
+F --> PR
+F --> W
+PR --> R
+L --> T
+L --> R
+RC --> T
+RC --> R
+UI --> RC : запуск по\nрасписанию
+R --> C
+C --> DB
+T --> TMDB : HTTPS
+W --> OM : HTTPS
+@enduml

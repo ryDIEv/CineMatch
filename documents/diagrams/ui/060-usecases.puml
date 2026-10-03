@@ -1,0 +1,28 @@
+@startuml
+!include _style.iuml
+left to right direction
+title Варианты использования модуля интерфейса
+actor "Пользователь\nконсоли" as CU
+actor "Пользователь\nTelegram" as TU
+actor "Администратор" as A
+actor "Таймер\n(раз в минуту)" as T
+rectangle "Модуль интерфейса" {
+  usecase "UC-14 Работать\nв консоли" as UC14
+  usecase "UC-15 Работать\nв Telegram-боте" as UC15
+  usecase "UC-16 Выполнить\nкоманду бота" as UC16
+  usecase "UC-17 Доставить\nнапоминание" as UC17
+  usecase "Отобразить ответ\nагентов" as R
+  usecase "Проверить ввод" as V
+  usecase "UC-11 Посмотреть\nстатистику" as UC11
+}
+CU --> UC14
+TU --> UC15
+TU --> UC16
+A --> UC11
+T --> UC17
+UC14 ..> R : <<include>>
+UC15 ..> R : <<include>>
+UC14 ..> V : <<include>>
+UC15 ..> V : <<include>>
+UC11 ..> UC16 : <<extend>>
+@enduml

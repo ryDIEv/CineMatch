@@ -1,0 +1,12 @@
+@startuml
+!include _style.iuml
+title Жизненный цикл консольного приложения
+[*] --> starting : запуск
+starting --> waiting_agent : отправлен /start
+waiting_agent --> showing : получен AgentResponse
+waiting_agent --> showing : ошибка → type=error
+showing --> waiting_input : ответ показан
+waiting_input --> waiting_agent : ввод корректен
+waiting_input --> waiting_input : пустой или длинный\nввод (подсказка)
+waiting_input --> [*] : команда выхода\nили Ctrl+C
+@enduml

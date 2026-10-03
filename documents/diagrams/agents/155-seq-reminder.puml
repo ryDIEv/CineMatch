@@ -1,0 +1,26 @@
+@startuml
+!include _style.iuml
+title Пользовательское напоминание (только Telegram)
+participant "Бот" as UI
+participant "Оркестратор" as O
+participant "Агент-планировщик" as PA
+participant "OpenRouter" as M
+participant "Модуль данных" as D
+UI -> O : «напомни в пятницу в 20:00 выбрать кино»
+O -> M : классификация намерения
+M --> O : reminder
+O -> PA : сообщение + часовой пояс
+PA -> M : промпт + сообщение
+M --> PA : {topic: films, due_at, text}
+alt тема не связана с фильмами
+  PA --> O : отказ
+  O --> UI : «Я напоминаю только о фильмах»
+else тема о фильмах
+  PA -> M : подтверждение
+  M --> PA : tool_use create_reminder(...)
+  PA -> D : create_reminder(custom, due_at, text)
+  D --> PA : id
+  PA --> O : создано
+  O --> UI : «Напомню в пт, 9 октября, 20:00»
+end
+@enduml
