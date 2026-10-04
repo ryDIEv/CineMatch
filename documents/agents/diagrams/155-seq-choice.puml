@@ -3,28 +3,33 @@
 title Выбор фильма и оценка при следующем визите
 participant "API-слой" as API
 participant "Оркестратор" as O
-participant "Рекомендатель" as RA
-participant "Компаньон" as CA
-participant "OpenRouter" as M
+participant "Агент" as A
+participant "RouterAI" as M
 participant "Модуль данных" as D
-API -> O : handle_user_turn("Выбираю «Двое и собака»")
-O -> RA : реакция на подборку
-RA -> M : классификация реакции
-M --> RA : select, фильм 2
-RA --> O : select(movie_id)
-O -> D : save_choice(user_id, movie_id)
+API -> O : handle_user_turn("Выбираю «Двое и собака»", movie_id)
+O -> M : классификатор запроса
+M --> O : cinema
+O -> A : сообщение + подсказка movie_id
+A -> M : сообщение
+M --> A : tool_use save_choice(movie_id)
+A -> D : save_choice(user_id, movie_id)\n(фильм из последней подборки)
+D --> A : ok
+A -> M : результат
+M --> A : AgentOutput(confirmation)
 O --> API : AgentResponse(confirmation)
 == Следующий визит ==
 API -> O : handle_user_turn("/start")
 O -> D : get_pending_feedback(user_id)
 D --> O : «Двое и собака»
-O -> CA : начать опрос
-CA --> API : «Как вам фильм? На сколько из 10?»
+O -> A : указание: спросить оценку
+A -> M : промпт + указание
+M --> A : вопрос об оценке
+O --> API : «Как вам фильм? На сколько из 10?»
 API -> O : handle_user_turn("на восьмёрку")
-O -> CA : ответ
-CA -> M : интерпретация ответа
-M --> CA : tool_use save_rating(movie_id, 8)
-CA -> D : save_rating(...)
-D --> CA : ok
-CA --> API : «Записал: 8 из 10»
+O -> A : ответ
+A -> M : ответ
+M --> A : tool_use save_rating(movie_id, 8)
+A -> D : save_rating(..., source = after_choice)
+D --> A : ok, выбор закрыт
+O --> API : «Записал: 8 из 10»
 @enduml

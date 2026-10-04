@@ -7,7 +7,7 @@ participant "Клиент TMDB" as T
 participant "TMDB API" as API
 participant "Репозитории" as R
 database "cinematch.db" as DB
-OP -> L : ingest_movies(filters, max_pages)
+OP -> L : ingest_movies(pages, from_year, min_votes, resume)
 L -> R : create_load(running)
 L -> T : genres()
 T -> API : GET genre/movie/list?language=ru-RU

@@ -8,13 +8,14 @@
 | Данные | [data/](data/README.md) | [vision_db.md](../docs/vision/vision_db.md) |
 | Интерфейс | [ui/](ui/README.md) | [vision_ui.md](../docs/vision/vision_ui.md) |
 
-Общее описание проекта — [vision_project.md](../docs/vision/vision_project.md).
+Общее описание проекта — [vision_project.md](../docs/vision/vision_project.md). Обзор аналогов, теоретические основы и обоснование выбора технологий — [rationale.md](rationale.md).
 
 ## Структура
 
 ```
 documents/
 ├── README.md              этот файл
+├── rationale.md           обоснование и обзор
 ├── agents/                010.glossary.md … 165.deployment-diagram.md, diagrams/
 ├── data/                  то же
 └── ui/                    то же + prototype/index.html

@@ -15,7 +15,7 @@ AG --> A : AgentResponse
 A --> W : event: response {AgentResponse}
 deactivate A
 W --> U : текст, три карточки, «Как агент выбирал»
-alt ошибка агентов или таймаут 60 с
+alt ошибка агента или таймаут 60 с
   A --> W : event: error {code, message}
   W --> U : сообщение об ошибке, ввод доступен
 end

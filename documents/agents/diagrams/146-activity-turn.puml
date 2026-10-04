@@ -2,33 +2,36 @@
 !include _style.iuml
 title Ход оркестратора: обработка одного сообщения
 start
-:handle_user_turn(user_id, message);
+:handle_user_turn(user_id, message, movie_id);
 :Загрузить настройки и сессию;
+if (Длина сообщения > 1000?) then (да)
+  :Ошибка INPUT_TOO_LONG;
+  stop
+endif
 if (Согласие принято?) then (нет)
-  :Этап consent;
+  :Правила хранения данных\n(модель не вызывается);
 elseif (Город указан?) then (нет)
-  :Этап onboarding;
-elseif (Сессия на этапе диалога?) then (да)
-  :Агент текущего этапа;
-elseif (Начало визита и есть\nневыставленная оценка?) then (да)
-  :Агент-компаньон;
-else (этап idle)
-  :Классифицировать намерение\n(LLM, ответ из перечня);
-  switch (Намерение)
-  case (recommend)
-    :Агент-распознаватель;
-  case (watched)
-    :Агент-компаньон;
-  case (settings)
-    :Смена города;
+  :resolve_city → подтверждение города;
+elseif (Этап confirm_delete?) then (да)
+  :Классификатор: yes / no;
+  if (yes?) then (да)
+    :delete_user_data;
+  else (нет)
+    :Вернуться к диалогу;
+  endif
+else (этап dialog)
+  :Классификатор запроса;
+  switch (Класс)
+  case (cinema)
+    :Запуск агента\n(лимит 8 вызовов модели);
+    :Проверка AgentOutput:\nсхема, фильмы из find_movies;
   case (delete_data)
-    :Подтверждение и удаление;
-  case (off_topic)
+    :Запрос подтверждения;
+  case (off_topic, unsafe)
     :Вежливый отказ;
   endswitch
 endif
-:Проверить ответ по JSON-схеме;
-:Сохранить сессию, записать трассу;
+:Сохранить сессию, записать трассу и события;
 :Вернуть AgentResponse;
 stop
 @enduml
