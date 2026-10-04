@@ -1,0 +1,20 @@
+@startuml
+!include _style.iuml
+title Выбор фильма нажатием на карточку
+actor "Пользователь" as U
+participant "Веб-приложение" as W
+participant "API-слой" as A
+participant "Модуль агентов" as AG
+U -> W : нажатие на карточку «Двое и собака»
+W -> W : карточка отмечена, остальные неактивны
+W -> W : в чат добавлено сообщение\n«Выбираю «Двое и собака»»
+W -> A : POST /api/v1/messages\n{text: "Выбираю «Двое и собака»", movie_id: 205}
+A -> AG : handle_user_turn(...)
+AG --> A : AgentResponse(confirmation)
+A --> W : event: response
+W --> U : «Хороший выбор. Приятного просмотра!»
+note over W, AG
+  Карточка лишь формирует сообщение;
+  решение «это выбор» принимает агент.
+end note
+@enduml

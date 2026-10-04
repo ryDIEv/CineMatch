@@ -1,0 +1,97 @@
+@startuml
+!include _style.iuml
+title Логическая модель данных (cinematch.db)
+hide circle
+hide empty methods
+skinparam linetype ortho
+entity movies {
+  * id : INTEGER <<PK>>
+  --
+  * tmdb_id : INTEGER <<UQ>>
+  * title : TEXT
+  original_title : TEXT
+  year : INTEGER
+  runtime : INTEGER
+  rating : REAL
+  * vote_count : INTEGER
+  popularity : REAL
+  age_rating : TEXT
+  overview : TEXT
+  poster_path : TEXT
+  * updated_at : TEXT
+}
+entity genres {
+  * id : INTEGER <<PK>>
+  --
+  * tmdb_id : INTEGER <<UQ>>
+  * name : TEXT <<UQ>>
+}
+entity movie_genres {
+  * movie_id : INTEGER <<PK, FK>>
+  * genre_id : INTEGER <<PK, FK>>
+}
+entity people {
+  * id : INTEGER <<PK>>
+  --
+  * tmdb_id : INTEGER <<UQ>>
+  * name : TEXT
+}
+entity movie_cast {
+  * movie_id : INTEGER <<PK, FK>>
+  * person_id : INTEGER <<PK, FK>>
+  --
+  * billing_order : INTEGER
+}
+entity users {
+  * user_id : TEXT <<PK>>
+  --
+  * source : TEXT
+  consent_at : TEXT
+  city : TEXT
+  latitude : REAL
+  longitude : REAL
+  * created_at : TEXT
+}
+entity user_ratings {
+  * user_id : TEXT <<PK, FK>>
+  * movie_id : INTEGER <<PK, FK>>
+  --
+  * rating : INTEGER
+  mood_match : TEXT
+  * source : TEXT
+  * rated_at : TEXT
+}
+entity user_choices {
+  * id : INTEGER <<PK>>
+  --
+  * user_id : TEXT <<FK>>
+  * movie_id : INTEGER <<FK>>
+  * status : TEXT
+  * chosen_at : TEXT
+}
+entity sessions {
+  * user_id : TEXT <<PK, FK>>
+  --
+  * state_json : TEXT
+  * expires_at : TEXT
+}
+entity catalog_loads {
+  * id : INTEGER <<PK>>
+  --
+  * started_at : TEXT
+  finished_at : TEXT
+  * status : TEXT
+  * params_json : TEXT
+  movies_upserted : INTEGER
+  last_page : INTEGER
+}
+movies ||--o{ movie_genres
+genres ||--o{ movie_genres
+movies ||--o{ movie_cast
+people ||--o{ movie_cast
+users ||--o{ user_ratings
+movies ||--o{ user_ratings
+users ||--o{ user_choices
+movies ||--o{ user_choices
+users ||--o| sessions
+@enduml

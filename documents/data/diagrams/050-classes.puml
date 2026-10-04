@@ -1,0 +1,58 @@
+@startuml
+!include _style.iuml
+title Сущности модуля данных
+hide empty methods
+package "Каталог" {
+  class Movie {
+    tmdb_id : int
+    title : str
+    year : int
+    runtime : int
+    rating : float
+    vote_count : int
+    age_rating : str [0..1]
+    poster_path : str [0..1]
+  }
+  class Genre {
+    tmdb_id : int
+    name : str
+  }
+  class Person {
+    tmdb_id : int
+    name : str
+  }
+}
+package "Пользователь" {
+  class User {
+    user_id : str
+    source : web
+    consent_at : datetime [0..1]
+    city : str [0..1]
+  }
+  class Rating {
+    rating : int [1..10]
+    mood_match : str [0..1]
+    source : after_choice | manual
+  }
+  class Choice {
+    chosen_at : datetime
+    status : pending | rated | dismissed
+  }
+  class Session {
+    state : JSON
+    expires_at : datetime
+  }
+}
+class CatalogLoad {
+  status : LoadStatus
+  movies_upserted : int
+  last_page : int
+}
+Movie "*" -- "1..*" Genre
+Movie "*" -- "*" Person : в ролях
+User "1" *-- "0..*" Rating
+User "1" *-- "0..*" Choice
+User "1" *-- "0..1" Session
+Rating "*" --> "1" Movie
+Choice "*" --> "1" Movie
+@enduml

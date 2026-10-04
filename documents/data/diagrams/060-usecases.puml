@@ -1,0 +1,27 @@
+@startuml
+!include _style.iuml
+left to right direction
+title Варианты использования модуля данных
+actor "Сопровождающий" as OP
+actor "Модуль ИИ-агентов" as AG
+actor "API-слой" as API
+rectangle "Модуль данных" {
+  usecase "UC-9 Загрузить или\nобновить каталог" as UC9
+  usecase "Найти фильмы\nпо критериям" as F1
+  usecase "Рассчитать профиль\nпредпочтений" as F2
+  usecase "Получить погоду" as F3
+  usecase "Сохранить согласие, город,\nвыбор, оценку" as F4
+  usecase "Хранить состояние\nсессии" as F5
+  usecase "Выдать историю\nоценок" as F6
+  usecase "Удалить данные\nпользователя" as F7
+}
+OP --> UC9
+AG --> F1
+AG --> F2
+AG --> F3
+AG --> F4
+AG --> F5
+API --> F6
+API --> F7
+AG --> F7
+@enduml

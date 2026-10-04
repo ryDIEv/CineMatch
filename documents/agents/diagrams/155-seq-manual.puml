@@ -1,0 +1,25 @@
+@startuml
+!include _style.iuml
+title Отметка просмотренного фильма
+participant "API-слой" as API
+participant "Оркестратор" as O
+participant "Компаньон" as CA
+participant "OpenRouter" as M
+participant "Модуль данных" as D
+API -> O : handle_user_turn("посмотрел Северный свет, на 9")
+O -> M : классификация намерения
+M --> O : watched
+O -> CA : сообщение
+CA -> M : промпт + сообщение + инструменты
+M --> CA : tool_use search_movie("Северный свет")
+CA -> D : search_movie(title)
+D --> CA : 2 совпадения
+CA --> API : «Какой: 2011 или 1987?»
+API -> O : handle_user_turn("2011")
+O -> CA : ответ
+CA -> M : ответ
+M --> CA : tool_use save_rating(movie_id, 9)
+CA -> D : save_rating(..., source = manual)
+D --> CA : ok
+CA --> API : «Записал: 9 из 10»
+@enduml

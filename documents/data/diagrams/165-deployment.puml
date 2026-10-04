@@ -1,0 +1,19 @@
+@startuml
+!include _style.iuml
+title Размещение модуля данных
+node "Компьютер пользователя\n(Docker Compose)" {
+  node "Контейнер backend" {
+    artifact "Модуль данных" as d
+    artifact "Скрипт загрузки каталога\n(docker compose run)" as l
+  }
+  folder "Том data/\n(volume)" {
+    database "cinematch.db" as db
+  }
+}
+cloud "TMDB API" as tmdb
+cloud "Open-Meteo" as om
+d --> db
+l --> db
+l --> tmdb : HTTPS
+d --> om : HTTPS
+@enduml

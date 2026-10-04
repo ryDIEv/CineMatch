@@ -1,0 +1,22 @@
+@startuml
+!include _style.iuml
+title Открытие приложения
+actor "Пользователь" as U
+participant "Веб-приложение" as W
+participant "API-слой" as A
+participant "Модуль агентов" as AG
+U -> W : открывает localhost:8080
+W -> A : GET /api/v1/session
+A --> W : {consent, city, has_pending_feedback}
+W -> A : POST /api/v1/messages {text: "/start"}
+A -> AG : handle_user_turn(web:local, "/start")
+alt первый визит
+  AG --> A : AgentResponse(consent)
+else есть фильм без оценки
+  AG --> A : AgentResponse(feedback_question)
+else обычный визит
+  AG --> A : AgentResponse(message: приветствие)
+end
+A --> W : event: response
+W --> U : первое сообщение диалога
+@enduml

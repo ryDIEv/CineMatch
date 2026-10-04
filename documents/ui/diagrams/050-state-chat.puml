@@ -1,0 +1,12 @@
+@startuml
+!include _style.iuml
+title Состояния экрана чата
+[*] --> loading : открыта страница
+loading --> ready : GET /session
+loading --> unavailable : сервер не отвечает
+unavailable --> loading : повтор
+ready --> streaming : сообщение отправлено
+streaming --> ready : событие response
+streaming --> error : событие error\nили обрыв потока
+error --> ready : сообщение об ошибке\nпоказано
+@enduml

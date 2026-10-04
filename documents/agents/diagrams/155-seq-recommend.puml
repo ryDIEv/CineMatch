@@ -1,0 +1,44 @@
+@startuml
+!include _style.iuml
+title Подбор фильма с вызовом инструментов
+participant "API-слой" as API
+participant "Оркестратор" as O
+participant "Распознаватель" as SA
+participant "Рекомендатель" as RA
+participant "OpenRouter" as M
+participant "Модуль данных" as D
+API -> O : handle_user_turn("устал, хочу на полтора часа")
+O -> M : классификация намерения
+M --> O : recommend
+O -> SA : сообщение
+SA -> M : промпт + сообщение + инструменты
+M --> SA : tool_use get_user_ratings, get_weather
+SA -> D : get_user_ratings(), get_weather()
+D --> SA : история, погода | None
+SA -> M : результаты
+M --> SA : уточняющий вопрос
+SA --> API : AgentResponse(question)
+API -> O : handle_user_turn("один, без ужасов")
+O -> SA : ответ
+SA -> M : ответ
+M --> SA : вектор состояния (JSON)
+SA -> RA : вектор состояния
+RA -> M : промпт + вектор + инструменты
+M --> RA : tool_use get_user_profile
+RA -> D : get_user_profile()
+D --> RA : профиль
+RA -> M : профиль
+M --> RA : tool_use find_movies(критерии)
+RA -> D : find_movies(...)
+D --> RA : кандидаты
+opt кандидатов меньше трёх (не более 2 повторов)
+  RA -> M : мало кандидатов
+  M --> RA : find_movies(ослабленные критерии)
+  RA -> D : find_movies(...)
+  D --> RA : кандидаты
+end
+RA -> M : кандидаты
+M --> RA : три фильма + обоснования (JSON)
+RA --> O : подборка + трасса
+O --> API : AgentResponse(recommendations)
+@enduml

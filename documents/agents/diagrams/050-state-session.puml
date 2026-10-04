@@ -1,0 +1,18 @@
+@startuml
+!include _style.iuml
+title Жизненный цикл сессии диалога
+[*] --> consent : первый визит
+consent --> onboarding : согласие принято
+consent --> consent : отказ\n(данные не сохраняются)
+onboarding --> idle : город указан
+idle --> feedback : при входе есть\nневыставленная оценка
+idle --> feedback : намерение\n«я посмотрел X»
+idle --> collecting_state : намерение\n«подобрать фильм»
+feedback --> idle : оценка сохранена
+collecting_state --> clarifying : базовые ответы
+clarifying --> recommending : вектор состояния готов
+recommending --> awaiting_reaction : три фильма показаны
+awaiting_reaction --> recommending : another
+awaiting_reaction --> idle : select / stop
+idle --> [*] : 24 часа без активности
+@enduml

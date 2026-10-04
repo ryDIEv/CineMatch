@@ -1,0 +1,23 @@
+@startuml
+!include _style.iuml
+left to right direction
+title Варианты использования модуля интерфейса
+actor "Пользователь" as U
+actor "Сопровождающий" as OP
+rectangle "Модуль интерфейса" {
+  usecase "UC-3, UC-4 Подбор\nв чате" as C
+  usecase "Выбрать фильм\nнажатием на карточку" as P
+  usecase "Раскрыть трассу\nрешений агента" as T
+  usecase "UC-10 Посмотреть\nисторию и оценки" as UC10
+  usecase "UC-11 Изменить город" as UC11
+  usecase "UC-7 Удалить мои данные" as UC7
+  usecase "UC-12 Запустить\nприложение" as UC12
+}
+U --> C
+U --> UC10
+U --> UC11
+U --> UC7
+OP --> UC12
+P .> C : <<extend>>
+T .> C : <<extend>>
+@enduml

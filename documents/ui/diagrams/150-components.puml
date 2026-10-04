@@ -1,0 +1,24 @@
+@startuml
+!include _style.iuml
+title Компоненты модуля интерфейса
+actor "Пользователь" as U
+package "Контейнер frontend (nginx)" {
+  component "Веб-приложение\n(React, TypeScript)" as WEB
+  component "nginx\n(статика, прокси /api)" as NG
+}
+package "Контейнер backend" {
+  component "API-слой\n(FastAPI)" as API
+  component "CurrentUser\n(определение пользователя)" as CU
+  component "SSE-поток\n(progress, response)" as SSE
+}
+component "Модуль ИИ-агентов" as AG
+component "Модуль данных" as DATA
+U --> NG : http://localhost:8080
+NG --> WEB : отдаёт статику
+WEB --> NG : /api/v1/...
+NG --> API : прокси
+API --> CU
+API --> SSE
+API --> AG : handle_user_turn
+API --> DATA : история, настройки,\nудаление
+@enduml

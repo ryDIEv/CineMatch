@@ -1,0 +1,17 @@
+@startuml
+!include _style.iuml
+title Контекст модуля данных
+component "Модуль ИИ-агентов" as ag
+component "API-слой\n(модуль интерфейса)" as api
+actor "Сопровождающий" as op
+component "Модуль данных" as data #E8F0FE
+database "SQLite\ncinematch.db" as db
+cloud "TMDB API" as tmdb
+cloud "Open-Meteo" as om
+ag --> data : инструменты,\nслужебные функции
+api --> data : история, настройки,\nудаление данных
+op --> data : загрузка каталога
+data --> db : SQL
+data --> tmdb : HTTPS
+data --> om : HTTPS
+@enduml

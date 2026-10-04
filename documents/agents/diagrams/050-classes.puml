@@ -1,0 +1,56 @@
+@startuml
+!include _style.iuml
+title Сущности модуля ИИ-агентов
+hide empty methods
+class "DialogSession\n(сессия диалога)" as S {
+  user_id : str
+  stage : Stage
+  clarifications_asked : int
+  updated_at : datetime
+}
+class "StateVector\n(вектор состояния)" as V {
+  mood : Mood
+  energy : Level
+  available_minutes : int
+  company : Company
+  genre_wishes : list
+  genre_avoid : list
+  weather : Weather [0..1]
+  notes : str [0..1]
+}
+class "Recommendation\n(подборка)" as R {
+  search_criteria : dict
+  candidate_ids : list[int]
+  cursor : int
+  shown_ids : list[int]
+  searches_count : int
+}
+class "AgentTrace\n(трасса решений)" as T {
+  agent : str
+  action : str
+  summary : str
+}
+class "AgentResponse\n(ответ интерфейсу)" as AR {
+  type : ResponseType
+  text : str
+  movies : list[MovieCard]
+  trace : list[AgentTrace]
+  stage : Stage
+}
+class "Choice\n(выбор)" as C {
+  movie_id : int
+  status : pending | rated | dismissed
+}
+class "WatchMark\n(оценка)" as W {
+  movie_id : int
+  rating : int [1..10]
+  mood_match : MoodMatch [0..1]
+  source : after_choice | manual
+}
+S "1" *-- "0..1" V
+S "1" *-- "0..1" R
+AR "1" *-- "0..*" T
+S ..> AR : формирует
+S ..> C : создаёт при выборе
+S ..> W : создаёт при оценке
+@enduml
