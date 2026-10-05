@@ -11,7 +11,7 @@ package "Модуль данных" {
   component "Скрипт загрузки\nкаталога" as L
   component "Клиент TMDB\n(лимит частоты, повторы)" as T
   component "Клиент Open-Meteo\n(кэш 30 мин)" as W
-  component "Подключение к БД\n(WAL, внешние ключи,\nмиграции)" as C
+  component "Подключение к БД\n(SQLAlchemy, WAL,\nмиграции Alembic)" as C
 }
 database "cinematch.db" as DB
 cloud "TMDB API" as TMDB

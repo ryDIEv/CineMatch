@@ -3,42 +3,42 @@
 title Подбор фильма с вызовом инструментов
 participant "API-слой" as API
 participant "Оркестратор" as O
-participant "Распознаватель" as SA
-participant "Рекомендатель" as RA
-participant "OpenRouter" as M
+participant "Агент" as A
+participant "RouterAI" as M
 participant "Модуль данных" as D
 API -> O : handle_user_turn("устал, хочу на полтора часа")
-O -> M : классификация намерения
-M --> O : recommend
-O -> SA : сообщение
-SA -> M : промпт + сообщение + инструменты
-M --> SA : tool_use get_user_ratings, get_weather
-SA -> D : get_user_ratings(), get_weather()
-D --> SA : история, погода | None
-SA -> M : результаты
-M --> SA : уточняющий вопрос
-SA --> API : AgentResponse(question)
+O -> M : классификатор запроса
+M --> O : cinema
+O -> A : сообщение + история сессии
+A -> M : промпт + сообщение + инструменты
+M --> A : tool_use extract_context
+A -> M : extract_context (схема EveningContext)
+M --> A : tired, 90 мин, компания неизвестна
+A -> M : результат
+M --> A : вопрос «С кем будете смотреть?»
+A --> O : AgentOutput(question)
+O --> API : AgentResponse(question)
 API -> O : handle_user_turn("один, без ужасов")
-O -> SA : ответ
-SA -> M : ответ
-M --> SA : вектор состояния (JSON)
-SA -> RA : вектор состояния
-RA -> M : промпт + вектор + инструменты
-M --> RA : tool_use get_user_profile
-RA -> D : get_user_profile()
-D --> RA : профиль
-RA -> M : профиль
-M --> RA : tool_use find_movies(критерии)
-RA -> D : find_movies(...)
-D --> RA : кандидаты
+O -> M : классификатор запроса
+M --> O : cinema
+O -> A : ответ + история сессии
+A -> M : ответ
+M --> A : tool_use get_weather, get_user_profile
+A -> D : get_weather(), get_user_profile()
+D --> A : погода, профиль
+A -> M : результаты
+M --> A : tool_use find_movies(критерии)
+A -> D : find_movies(..., exclude_ids)
+D --> A : кандидаты
 opt кандидатов меньше трёх (не более 2 повторов)
-  RA -> M : мало кандидатов
-  M --> RA : find_movies(ослабленные критерии)
-  RA -> D : find_movies(...)
-  D --> RA : кандидаты
+  A -> M : мало кандидатов
+  M --> A : find_movies(ослабленные критерии)
+  A -> D : find_movies(...)
+  D --> A : кандидаты
 end
-RA -> M : кандидаты
-M --> RA : три фильма + обоснования (JSON)
-RA --> O : подборка + трасса
+A -> M : кандидаты
+M --> A : AgentOutput(три фильма + объяснения)
+A --> O : ответ + трасса
+O -> O : проверка: фильмы из результатов find_movies
 O --> API : AgentResponse(recommendations)
 @enduml

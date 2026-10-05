@@ -8,8 +8,8 @@ node "Компьютер пользователя\n(Docker Compose)" {
     artifact "Модуль данных" as data
   }
 }
-cloud "OpenRouter" as or
+cloud "RouterAI" as ra
 api --> ag : вызов функции
 ag --> data : вызов функции
-ag --> or : HTTPS
+ag --> ra : HTTPS
 @enduml

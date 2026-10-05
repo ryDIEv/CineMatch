@@ -4,35 +4,30 @@ title Компоненты модуля ИИ-агентов
 component "API-слой\n(модуль интерфейса)" as API
 package "Модуль ИИ-агентов" {
   component "Оркестратор\nhandle_user_turn" as O
-  component "Классификатор\nнамерений" as IC
-  component "Защита диалога\n(проверка ввода и\nответов по схеме)" as G
-  component "Агент-распознаватель\nсостояния" as SA
-  component "Агент-рекомендатель" as RA
-  component "Агент-компаньон" as CA
+  component "Классификатор\nзапросов" as IC
+  component "Агент CineMatch" as A
+  component "extract_context\n(агент как инструмент)" as EC
   component "Реестр инструментов" as TR
-  component "Клиент LLM" as L
+  component "Проверка ответа" as G
+  component "Подключение к модели\n(Pydantic AI)" as L
   component "Промпты" as P
   component "Трасса решений" as TT
 }
 component "Модуль данных" as DATA
-cloud "OpenRouter" as OR
+cloud "RouterAI" as RA
 API --> O
 O --> IC
+O --> A
 O --> G
-O --> SA
-O --> RA
-O --> CA
 O --> TT
-IC --> L
-SA --> L
-RA --> L
-CA --> L
-SA --> TR
-RA --> TR
-CA --> TR
+A --> TR
+TR --> EC
 TR --> TT
+IC --> L
+A --> L
+EC --> L
 L ..> P
-L --> OR : HTTPS
+L --> RA : HTTPS
 TR --> DATA : инструменты
 O --> DATA : служебные\nфункции
 @enduml

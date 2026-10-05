@@ -5,28 +5,30 @@ hide empty methods
 class "DialogSession\n(сессия диалога)" as S {
   user_id : str
   stage : Stage
+  pending : PendingChoice [0..1]
+  messages : list [0..20]
+  last_shown_ids : list[int]
+  shown_ids : list[int]
   clarifications_asked : int
   updated_at : datetime
 }
-class "StateVector\n(вектор состояния)" as V {
-  mood : Mood
-  energy : Level
-  available_minutes : int
-  company : Company
+class "EveningContext\n(контекст вечера)" as V {
+  mood : Mood [0..1]
+  energy : Level [0..1]
+  available_minutes : int [0..1]
+  company : Company [0..1]
   genre_wishes : list
   genre_avoid : list
-  weather : Weather [0..1]
   notes : str [0..1]
 }
-class "Recommendation\n(подборка)" as R {
-  search_criteria : dict
-  candidate_ids : list[int]
-  cursor : int
-  shown_ids : list[int]
-  searches_count : int
+class "AgentOutput\n(ответ агента)" as O {
+  kind : OutputKind
+  text : str
+  movie_ids : list[int] [0 или 3]
+  reasons : list[str]
 }
 class "AgentTrace\n(трасса решений)" as T {
-  agent : str
+  step : str
   action : str
   summary : str
 }
@@ -47,10 +49,9 @@ class "WatchMark\n(оценка)" as W {
   mood_match : MoodMatch [0..1]
   source : after_choice | manual
 }
-S "1" *-- "0..1" V
-S "1" *-- "0..1" R
+S "1" *-- "0..1" V : context
+O ..> AR : проверяется и\nпреобразуется
 AR "1" *-- "0..*" T
-S ..> AR : формирует
-S ..> C : создаёт при выборе
-S ..> W : создаёт при оценке
+S ..> C : save_choice
+S ..> W : save_rating
 @enduml
