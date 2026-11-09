@@ -38,7 +38,7 @@ cinematch/
 │   ├── tools.py          реестр инструментов и проверки    ← agents/130, 070
 │   ├── guardrails.py     проверка ответа и лимиты          ← agents/150
 │   ├── trace.py          сборка трассы                     ← agents/120
-│   └── prompts/          system_agent.md, classifier.md, confirm_delete.md,
+│   └── prompts/          system_agent.md, classifier.md, confirm_yes_no.md,
 │                         extract_context.md, retry_invalid_output.md ← agents/125
 ├── data/                 модуль данных
 │   ├── db.py             подключение SQLite (WAL)          ← data/120, ADR-011
