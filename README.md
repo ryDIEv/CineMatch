@@ -107,6 +107,7 @@ tests/             проверки по сценариям TS-*
 ## Документация
 
 - [Общая часть](documents/overall/README.md): [контракты](documents/overall/contracts.md), [конфигурация](documents/overall/config.md), [сборка](documents/overall/build.md).
+- [Технические задания](docs/specs/README.md): общая часть и модуль ИИ-агентов, базовая редакция для данных и интерфейса.
 - [Vision проекта](docs/vision/vision_project.md): проблема, возможности, объём MVP, этапы.
 - Vision модулей: [агенты](docs/vision/vision_llm.md), [данные](docs/vision/vision_db.md), [интерфейс](docs/vision/vision_ui.md).
 - [Проектная документация](documents/README.md): состав документов, правила нумерации и оформления.
