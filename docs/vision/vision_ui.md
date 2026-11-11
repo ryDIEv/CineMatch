@@ -30,7 +30,7 @@
 
 ## 4. Взаимодействие
 
-- **С модулем агентов:** `handle_user_turn(user_id, message) → AgentResponse`.
+- **С модулем агентов:** `handle_user_turn(user_id, message, movie_id=None, on_progress=None) → AgentResponse`.
 - **С модулем данных:** история оценок, настройки, удаление данных.
 - **С браузером:** REST API `/api/v1/…` и поток событий SSE.
 

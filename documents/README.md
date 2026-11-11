@@ -20,7 +20,9 @@ documents/
 ├── overall/               общий слой: contracts, config, build
 ├── agents/                010.glossary.md … 165.deployment-diagram.md, 125.prompts.md, diagrams/
 ├── data/                  то же
-└── ui/                    то же + prototype/index.html
+├── ui/                    то же + prototype/index.html
+├── testing/               сценарии TS-*, диалоги, атаки, методика оценки
+└── future/                черновики Telegram/CLI, не входят в MVP
 ```
 
 ## Документы
