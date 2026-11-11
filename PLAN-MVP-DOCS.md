@@ -75,7 +75,7 @@
 
 ### 3.4. Общая часть и отчётность
 
-1. `docs/specs/cinematch_specs.docx` — обновить под 0.4.0, `on_progress`, `/start`, `POST /consent`, полный список env, даты, «0–3 фильма».
+1. `docs/specs/cinematch_specs.docx` — обновить под 0.4.0, `on_progress`, `/start`, `POST /consent`, полный список env, даты, «0–3 фильма». Для общей части и модуля ИИ-агентов это закрыто документом `docs/specs/cinematch_specs_agents.docx` (11.11.2026); для данных и интерфейса — их ТЗ.
 2. `scripts/check_docs.py` + `.github/workflows/docs.yml` в публичном репозитории.
 3. Приватный репозиторий: отчёты `data/` и `ui/`, новые рисунки, копия ТЗ, обновление `docs-review-todo`.
 4. Удалить этот файл после закрытия разделов 3–4.
