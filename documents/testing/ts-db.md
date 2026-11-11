@@ -7,7 +7,7 @@
 | TS-DB-01 | `alembic upgrade head`; загрузить 5 страниц; проверить отчёт | мок TMDB, 5 страниц | `catalog_loads` completed; счётчики; время; размер БД | pytest |
 | TS-DB-02 | Загрузить повторно; прервать на середине; `--resume` | тот же каталог | дублей нет; `movies.id` не меняется; продолжение с `last_page + 1` | pytest + SQL |
 | TS-DB-03 | 401; 429 с `Retry-After`; 404 на детали; 5xx пять раз | мок ответов | 401 → failed/exit 2; 429 → пауза и повтор; 404 → skip; 5xx → partial/exit 4 | pytest |
-| TS-DB-04 | Каждый фильтр; жанры по «ИЛИ»; `exclude_genres`; `exclude_ids`; порог 100; `get_catalog_size`; неверные параметры | фикстура 20 + синтетика | ожидаемые строки и порядок; `UNKNOWN_GENRE`; `INVALID_PARAM`; пустой каталог → `CATALOG_EMPTY`; время NFR-DB-01 | pytest + benchmark |
+| TS-DB-04 | Каждый фильтр; жанры по «ИЛИ»; `exclude_genres`; `exclude_ids`; порог 100 (фильм с 42 голосами); `max_runtime` при `runtime = NULL`; `get_catalog_size`; `get_movie_with_credits` (`overview`, `actors`); неверные параметры | фикстура 23 + синтетика | ожидаемые строки и порядок; фильм с 42 голосами и фильм без длительности отсутствуют; `UNKNOWN_GENRE`; `INVALID_PARAM`; пустой каталог → `CATALOG_EMPTY`; время NFR-DB-01 | pytest + benchmark |
 | TS-DB-05 | Профиль: пустой, 5 оценок, новая оценка, `limit` | фикстура | веса из ADR-013; `limit` не влияет; холодный старт — пустые словари | pytest |
 | TS-DB-06 | Оценка 1–10; повтор; закрытие выбора; один `pending`; история | фикстура | upsert; `rated`; `dismissed`; уникальный индекс; `HistoryItem` | pytest + SQL |
 | TS-DB-07 | Погода: известный и неоднозначный город; все WMO; кэш; тайм-аут | мок Open-Meteo | `Weather` или `None`; кэш 30 мин; тайм-аут 3 с | pytest |
