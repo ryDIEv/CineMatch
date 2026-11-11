@@ -150,7 +150,7 @@
 
 <div class="drawer" id="drawer" role="dialog" aria-label="История и оценки">
   <button class="close" id="drawer-close">Закрыть</button>
-  <h2>История и оценки</h2>
+  <h2 id="drawer-title">История и оценки</h2>
   <div id="history"></div>
 </div>
 
@@ -359,9 +359,35 @@ function renderHistory() {
     h.append(r);
   });
 }
-$("nav-history").onclick = () => { renderHistory(); $("drawer").classList.add("open"); $("drawer-close").focus(); };
-$("drawer-close").onclick = () => { $("drawer").classList.remove("open"); $("nav-history").focus(); };
-$("nav-data").onclick = () => { inner.append(el("div", "msg-system", "Раздел «Мои данные»: город, согласие, удаление данных. В прототипе не реализован.")); scroll(); };
+function openDrawer(title, render) {
+  $("drawer-title").textContent = title;
+  $("drawer").setAttribute("aria-label", title);
+  render();
+  $("drawer").classList.add("open");
+  $("drawer-close").focus();
+}
+function renderData() {
+  const h = $("history"); h.innerHTML = "";
+  const city = el("div", "row");
+  city.append(el("div", null, "Город"), el("div", null, $("weather").textContent.split(",")[0]));
+  city.append(el("small", null, "Погода учитывается в подборке; изменить город можно здесь."));
+  h.append(city);
+  const consent = el("div", "row");
+  consent.append(el("div", null, "Согласие"), el("div", null, "получено"));
+  consent.append(el("small", null, "Данные хранятся только на этом компьютере."));
+  h.append(consent);
+  const del = el("button", "ghost", "Удалить мои данные"); del.type = "button";
+  del.onclick = () => {
+    if (!confirm("Удалить оценки, историю и настройки? Это действие нельзя отменить.")) return;
+    HISTORY.length = 0; inner.innerHTML = "";
+    inner.append(el("div", "msg-system", "Готово, данные удалены. Следующий визит начнётся с согласия."));
+    $("drawer").classList.remove("open"); scroll();
+  };
+  h.append(del);
+}
+$("nav-history").onclick = () => openDrawer("История и оценки", renderHistory);
+$("drawer-close").onclick = () => { $("drawer").classList.remove("open"); $("nav-chat").focus(); };
+$("nav-data").onclick = () => openDrawer("Мои данные", renderData);
 $("nav-chat").onclick = () => $("drawer").classList.remove("open");
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("drawer").classList.remove("open"); });
 

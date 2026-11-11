@@ -55,6 +55,8 @@ migrations/               Alembic, первая миграция ← data/120, A
 scripts/load_catalog.py   CLI загрузки каталога  ← data/110, UC-9
 tests/                    проверки по scenarios TS-* ← documents/testing
 documents/                проектная документация (этот комплект)
+documents/testing/        сценарии TS-*, 30 диалогов, 20 атак, методика оценки
+documents/future/         черновики будущего функционала, не входят в MVP
 docs/                     vision, дорожная карта, ТЗ
 storage/                  локальные данные, в git не попадает
 ```
@@ -135,7 +137,7 @@ python scripts/check_docs.py     # проверка документации и 
 | `cinematch/interfaces/web/*` | [110 интерфейса](../ui/110.ui-ux.md), [115 интерфейса](../ui/115.live-prototype.md) |
 | `migrations/versions/*` | [120 данных](../data/120.data-model.md) |
 | `scripts/load_catalog.py` | [110 данных](../data/110.ui-ux.md), [060 данных](../data/060.use-cases.md) UC-9 |
-| `tests/*` | [095](../agents/095.requirements-check.md), `documents/testing/` |
+| `tests/*` | [095](../agents/095.requirements-check.md), [testing](../testing/README.md) |
 
 ## 7. Как этим пользоваться ИИ-агенту программирования
 

@@ -1,0 +1,295 @@
+[
+  {
+    "movie_id": 1,
+    "tmdb_id": 100001,
+    "title": "Тихий дом у моря",
+    "year": 2014,
+    "runtime": 98,
+    "rating": 7.8,
+    "vote_count": 1240,
+    "age_rating": "12+",
+    "genres": [
+      "Драма",
+      "Комедия"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 2,
+    "tmdb_id": 100002,
+    "title": "Двое и собака",
+    "year": 2016,
+    "runtime": 102,
+    "rating": 7.5,
+    "vote_count": 980,
+    "age_rating": "12+",
+    "genres": [
+      "Комедия",
+      "Драма"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 3,
+    "tmdb_id": 100003,
+    "title": "Северный свет",
+    "year": 2011,
+    "runtime": 110,
+    "rating": 7.2,
+    "vote_count": 640,
+    "age_rating": "16+",
+    "genres": [
+      "Драма"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 4,
+    "tmdb_id": 100004,
+    "title": "Северный свет",
+    "year": 1987,
+    "runtime": 95,
+    "rating": 6.9,
+    "vote_count": 310,
+    "age_rating": "12+",
+    "genres": [
+      "Драма"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 5,
+    "tmdb_id": 100005,
+    "title": "Дюна",
+    "year": 2021,
+    "runtime": 155,
+    "rating": 8.1,
+    "vote_count": 5200,
+    "age_rating": "16+",
+    "genres": [
+      "Фантастика",
+      "Приключения"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 6,
+    "tmdb_id": 100006,
+    "title": "Смешные люди",
+    "year": 2019,
+    "runtime": 88,
+    "rating": 7.0,
+    "vote_count": 420,
+    "age_rating": "12+",
+    "genres": [
+      "Комедия"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 7,
+    "tmdb_id": 100007,
+    "title": "Дом у дороги",
+    "year": 2020,
+    "runtime": 130,
+    "rating": 6.8,
+    "vote_count": 210,
+    "age_rating": "16+",
+    "genres": [
+      "Триллер"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 8,
+    "tmdb_id": 100008,
+    "title": "Полярная станция",
+    "year": 2019,
+    "runtime": 90,
+    "rating": 7.4,
+    "vote_count": 350,
+    "age_rating": "12+",
+    "genres": [
+      "Драма",
+      "Приключения"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 9,
+    "tmdb_id": 100009,
+    "title": "Зомби в отпуске",
+    "year": 2027,
+    "runtime": 85,
+    "rating": 5.9,
+    "vote_count": 120,
+    "age_rating": "18+",
+    "genres": [
+      "Ужасы",
+      "Комедия"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 10,
+    "tmdb_id": 100010,
+    "title": "Ужас в подвале",
+    "year": 2018,
+    "runtime": 99,
+    "rating": 6.5,
+    "vote_count": 800,
+    "age_rating": "18+",
+    "genres": [
+      "Ужасы"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 11,
+    "tmdb_id": 100011,
+    "title": "Семейный выходной",
+    "year": 2017,
+    "runtime": 92,
+    "rating": 7.1,
+    "vote_count": 610,
+    "age_rating": "6+",
+    "genres": [
+      "Комедия",
+      "Семейный"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 12,
+    "tmdb_id": 100012,
+    "title": "Дети капитана",
+    "year": 2015,
+    "runtime": 105,
+    "rating": 7.6,
+    "vote_count": 540,
+    "age_rating": "6+",
+    "genres": [
+      "Приключения",
+      "Семейный"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 13,
+    "tmdb_id": 100013,
+    "title": "Ночь в городе",
+    "year": 2013,
+    "runtime": 118,
+    "rating": 6.7,
+    "vote_count": 290,
+    "age_rating": "16+",
+    "genres": [
+      "Драма",
+      "Триллер"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 14,
+    "tmdb_id": 100014,
+    "title": "Весёлый рейс",
+    "year": 2022,
+    "runtime": 96,
+    "rating": 7.3,
+    "vote_count": 730,
+    "age_rating": "12+",
+    "genres": [
+      "Комедия",
+      "Приключения"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 15,
+    "tmdb_id": 100015,
+    "title": "Спокойный вечер",
+    "year": 2009,
+    "runtime": 84,
+    "rating": 7.9,
+    "vote_count": 1500,
+    "age_rating": null,
+    "genres": [
+      "Драма"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 16,
+    "tmdb_id": 100016,
+    "title": "Космический патруль",
+    "year": 2023,
+    "runtime": 140,
+    "rating": 7.0,
+    "vote_count": 2100,
+    "age_rating": "12+",
+    "genres": [
+      "Фантастика",
+      "Приключения"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 17,
+    "tmdb_id": 100017,
+    "title": "Старое кино",
+    "year": 1975,
+    "runtime": 112,
+    "rating": 8.0,
+    "vote_count": 900,
+    "age_rating": "12+",
+    "genres": [
+      "Драма"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 18,
+    "tmdb_id": 100018,
+    "title": "Тихий лес",
+    "year": 2012,
+    "runtime": 101,
+    "rating": 6.4,
+    "vote_count": 180,
+    "age_rating": null,
+    "genres": [
+      "Триллер",
+      "Ужасы"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 19,
+    "tmdb_id": 100019,
+    "title": "Летний лагерь",
+    "year": 2021,
+    "runtime": 89,
+    "rating": 7.2,
+    "vote_count": 460,
+    "age_rating": "0+",
+    "genres": [
+      "Семейный",
+      "Комедия"
+    ],
+    "poster_url": null
+  },
+  {
+    "movie_id": 20,
+    "tmdb_id": 100020,
+    "title": "Долгая дорога",
+    "year": 2010,
+    "runtime": 165,
+    "rating": 7.7,
+    "vote_count": 1300,
+    "age_rating": "16+",
+    "genres": [
+      "Драма",
+      "Приключения"
+    ],
+    "poster_url": null
+  }
+]

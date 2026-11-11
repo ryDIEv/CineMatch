@@ -58,7 +58,7 @@
 2. `python scripts/check_docs.py` не находит расхождений (если скрипт ещё не перенесён — проверь ссылки вручную).
 3. `docker compose up --build -d` поднимает backend и frontend; `/api/v1/health` отвечает.
 4. Эталонные диалоги из `documents/agents/115.live-prototype.md` воспроизводятся.
-5. Сценарии `TS-AG`, `TS-DB`, `TS-UI` из `095` соответствующих модулей проходят.
+5. Сценарии `TS-AG`, `TS-DB`, `TS-UI` из `095` соответствующих модулей и `documents/testing/` проходят.
 
 ## Порядок работы
 
