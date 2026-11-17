@@ -35,9 +35,17 @@ package "API-слой (Python)" {
   class SessionRouter {
     GET /session
   }
+  class ConsentRouter {
+    POST /consent
+  }
+  class CitiesRouter {
+    GET /cities
+  }
+  class SettingsRouter {
+    PUT /settings
+  }
   class MeRouter {
     GET /history
-    PUT /settings
     DELETE /me
   }
   class CurrentUser {
@@ -51,8 +59,14 @@ HistoryScreen --> ApiClient
 DataScreen --> ApiClient
 ApiClient ..> ChatRouter : HTTP
 ApiClient ..> SessionRouter : HTTP
+ApiClient ..> ConsentRouter : HTTP
+ApiClient ..> CitiesRouter : HTTP
+ApiClient ..> SettingsRouter : HTTP
 ApiClient ..> MeRouter : HTTP
 ChatRouter --> CurrentUser
 SessionRouter --> CurrentUser
+ConsentRouter --> CurrentUser
+CitiesRouter --> CurrentUser
+SettingsRouter --> CurrentUser
 MeRouter --> CurrentUser
 @enduml
