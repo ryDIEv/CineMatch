@@ -26,7 +26,7 @@
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
       --dusk: #f1eef7; --hall: #ffffff; --hall-2: #f6f3fb; --line: #ddd6ec;
-      --text: #231f37; --muted: #6d6688; --projector: #a8740f; --projector-ink: #ffffff;
+      --text: #231f37; --muted: #6d6688; --projector: #8a5d0a; --projector-ink: #ffffff;
       --velvet: #a33a4e; --user-bubble: #e7e1f4; --shadow: 0 18px 40px -22px rgba(40, 30, 80, .35);
     }
   }
@@ -103,6 +103,18 @@
   .drawer .score { font-family: var(--title); font-size: 22px; color: var(--projector); grid-row: span 2; align-self: center; }
   .drawer small { color: var(--muted); }
   .close { float: right; background: none; border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+
+  .city-search { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 10px; }
+  .city-search input { flex: 1; min-width: 0; background: var(--hall-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; color: inherit; }
+  .city-search input[aria-invalid="true"] { border-color: var(--velvet); }
+  .city-list { grid-column: 1 / -1; margin: 8px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .city-list li + li { border-top: 1px solid var(--line); }
+  .city-list button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 9px 12px; cursor: pointer; }
+  .city-list button:hover, .city-list button:focus-visible { background: var(--hall-2); }
+  .city-status { grid-column: 1 / -1; margin: 8px 0 0; min-height: 1.2em; font-size: 14px; color: var(--muted); }
+  .city-status[data-state="saved"] { color: var(--projector); }
+  .city-status[data-state="clarify"] { color: var(--text); }
+  .city-status[data-state="error"] { color: var(--velvet); }
 
   @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; }
@@ -217,6 +229,25 @@ const HISTORY = [
   ["Тайна старого маяка", "2015, детектив", 7, "отмечено вручную"],
   ["Лето в Тбилиси", "2020, драма", 8, "по подборке"]
 ];
+
+/* Города для поиска с вариантами в «Мои данные» (UC-11). В MVP список отдаёт GET /api/v1/cities:
+   {name, region, country, latitude, longitude}. Подпись варианта — «город, регион»: так различаются
+   одноимённые города (Кировск, Октябрьский). */
+const CITIES = [
+  { name: "Москва", region: "Москва" },
+  { name: "Санкт-Петербург", region: "Санкт-Петербург" },
+  { name: "Казань", region: "Татарстан" },
+  { name: "Кировск", region: "Мурманская область" },
+  { name: "Кировск", region: "Ленинградская область" },
+  { name: "Октябрьский", region: "Республика Башкортостан" },
+  { name: "Октябрьский", region: "Московская область" },
+  { name: "Нижний Новгород", region: "Нижегородская область" },
+  { name: "Новосибирск", region: "Новосибирская область" },
+  { name: "Екатеринбург", region: "Свердловская область" }
+];
+let currentCity = CITIES[0];
+const cityLabel = c => `${c.name}, ${c.region}`;
+const normCity = s => String(s).trim().toLowerCase().replace(/ё/g, "е");
 
 const $ = id => document.getElementById(id);
 const inner = $("feed-inner"), input = $("input"), send = $("send"), hint = $("hint");
@@ -369,9 +400,87 @@ function openDrawer(title, render) {
 function renderData() {
   const h = $("history"); h.innerHTML = "";
   const city = el("div", "row");
-  city.append(el("div", null, "Город"), el("div", null, $("weather").textContent.split(",")[0]));
-  city.append(el("small", null, "Погода учитывается в подборке; изменить город можно здесь."));
+  const cityValue = el("div", null, cityLabel(currentCity));
+  city.append(el("div", null, "Город"), cityValue);
+  city.append(el("small", null, "Погода учитывается в подборке. Начните вводить название или регион — появятся варианты."));
+
+  const search = el("div", "city-search");
+  const field = el("input");
+  field.type = "text"; field.id = "city-input"; field.placeholder = "Например: Казань или Кировск";
+  field.setAttribute("aria-label", "Город");
+  field.setAttribute("autocomplete", "off");
+  field.setAttribute("role", "combobox");
+  field.setAttribute("aria-autocomplete", "list");
+  field.setAttribute("aria-expanded", "false");
+  field.setAttribute("aria-controls", "city-list");
+  const saveBtn = el("button", "ghost", "Сохранить город"); saveBtn.type = "button";
+  search.append(field, saveBtn);
+
+  const list = el("ul", "city-list"); list.id = "city-list"; list.hidden = true;
+  const status = el("p", "city-status"); status.setAttribute("role", "status");
+  city.append(search, list, status);
   h.append(city);
+
+  const collapse = () => { list.hidden = true; field.setAttribute("aria-expanded", "false"); };
+
+  const showOptions = options => {
+    list.innerHTML = "";
+    options.forEach(c => {
+      const li = el("li");
+      const b = el("button", null, cityLabel(c)); b.type = "button";
+      b.setAttribute("aria-label", `Выбрать город ${cityLabel(c)}`);
+      b.onclick = () => choose(c);
+      li.append(b); list.append(li);
+    });
+    list.hidden = options.length === 0;
+    field.setAttribute("aria-expanded", String(options.length > 0));
+  };
+
+  const saveCity = raw => {
+    const q = normCity(raw);
+    const exact = CITIES.find(c => normCity(cityLabel(c)) === q);
+    const sameName = CITIES.filter(c => normCity(c.name) === q);
+    if (exact) return apply(exact);
+    if (sameName.length === 1) return apply(sameName[0]);
+    if (sameName.length > 1) {
+      status.textContent = "Уточните город: подойдёт несколько вариантов.";
+      status.dataset.state = "clarify";
+      field.removeAttribute("aria-invalid");
+      showOptions(sameName);
+      field.focus();
+      return;
+    }
+    status.textContent = "Не нашёл такой город. Напишите название ещё раз.";
+    status.dataset.state = "error";
+    field.setAttribute("aria-invalid", "true");
+  };
+
+  const apply = chosen => {
+    currentCity = chosen;
+    cityValue.textContent = cityLabel(chosen);
+    $("weather").textContent = chosen.name;
+    field.value = cityLabel(chosen);
+    field.removeAttribute("aria-invalid");
+    status.textContent = "Город сохранён.";
+    status.dataset.state = "saved";
+    collapse();
+  };
+
+  const choose = c => { field.value = cityLabel(c); apply(c); field.focus(); };
+
+  field.oninput = () => {
+    status.textContent = ""; delete status.dataset.state;
+    field.removeAttribute("aria-invalid");
+    const q = normCity(field.value);
+    if (!q) return showOptions([]);
+    showOptions(CITIES.filter(c => normCity(c.name).includes(q) || normCity(c.region).includes(q)).slice(0, 5));
+  };
+  field.onkeydown = e => {
+    if (e.key === "Enter") { e.preventDefault(); saveCity(field.value); }
+    if (e.key === "Escape") collapse();
+  };
+  saveBtn.onclick = () => saveCity(field.value);
+
   const consent = el("div", "row");
   consent.append(el("div", null, "Согласие"), el("div", null, "получено"));
   consent.append(el("small", null, "Данные хранятся только на этом компьютере."));
