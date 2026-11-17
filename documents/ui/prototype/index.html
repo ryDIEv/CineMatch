@@ -113,6 +113,7 @@
   .city-list button:hover, .city-list button:focus-visible { background: var(--hall-2); }
   .city-status { grid-column: 1 / -1; margin: 8px 0 0; min-height: 1.2em; font-size: 14px; color: var(--muted); }
   .city-status[data-state="saved"] { color: var(--projector); }
+  .city-status[data-state="clarify"] { color: var(--text); }
   .city-status[data-state="error"] { color: var(--velvet); }
 
   @media (max-width: 900px) {
@@ -229,9 +230,24 @@ const HISTORY = [
   ["Лето в Тбилиси", "2020, драма", 8, "по подборке"]
 ];
 
-/* Города для поиска с вариантами в «Мои данные» (UC-11). В MVP список отдаёт GET /api/v1/cities. */
-const CITIES = ["Москва", "Санкт-Петербург", "Казань", "Нижний Новгород", "Новосибирск", "Екатеринбург", "Краснодар", "Владивосток"];
-let currentCity = "Москва";
+/* Города для поиска с вариантами в «Мои данные» (UC-11). В MVP список отдаёт GET /api/v1/cities:
+   {name, region, country, latitude, longitude}. Подпись варианта — «город, регион»: так различаются
+   одноимённые города (Кировск, Октябрьский). */
+const CITIES = [
+  { name: "Москва", region: "Москва" },
+  { name: "Санкт-Петербург", region: "Санкт-Петербург" },
+  { name: "Казань", region: "Татарстан" },
+  { name: "Кировск", region: "Мурманская область" },
+  { name: "Кировск", region: "Ленинградская область" },
+  { name: "Октябрьский", region: "Республика Башкортостан" },
+  { name: "Октябрьский", region: "Московская область" },
+  { name: "Нижний Новгород", region: "Нижегородская область" },
+  { name: "Новосибирск", region: "Новосибирская область" },
+  { name: "Екатеринбург", region: "Свердловская область" }
+];
+let currentCity = CITIES[0];
+const cityLabel = c => `${c.name}, ${c.region}`;
+const normCity = s => String(s).trim().toLowerCase().replace(/ё/g, "е");
 
 const $ = id => document.getElementById(id);
 const inner = $("feed-inner"), input = $("input"), send = $("send"), hint = $("hint");
@@ -384,13 +400,13 @@ function openDrawer(title, render) {
 function renderData() {
   const h = $("history"); h.innerHTML = "";
   const city = el("div", "row");
-  const cityValue = el("div", null, currentCity);
+  const cityValue = el("div", null, cityLabel(currentCity));
   city.append(el("div", null, "Город"), cityValue);
-  city.append(el("small", null, "Погода учитывается в подборке. Начните вводить название — появятся варианты."));
+  city.append(el("small", null, "Погода учитывается в подборке. Начните вводить название или регион — появятся варианты."));
 
   const search = el("div", "city-search");
   const field = el("input");
-  field.type = "text"; field.id = "city-input"; field.placeholder = "Например: Казань";
+  field.type = "text"; field.id = "city-input"; field.placeholder = "Например: Казань или Кировск";
   field.setAttribute("aria-label", "Город");
   field.setAttribute("autocomplete", "off");
   field.setAttribute("role", "combobox");
@@ -407,40 +423,57 @@ function renderData() {
 
   const collapse = () => { list.hidden = true; field.setAttribute("aria-expanded", "false"); };
 
+  const showOptions = options => {
+    list.innerHTML = "";
+    options.forEach(c => {
+      const li = el("li");
+      const b = el("button", null, cityLabel(c)); b.type = "button";
+      b.setAttribute("aria-label", `Выбрать город ${cityLabel(c)}`);
+      b.onclick = () => choose(c);
+      li.append(b); list.append(li);
+    });
+    list.hidden = options.length === 0;
+    field.setAttribute("aria-expanded", String(options.length > 0));
+  };
+
   const saveCity = raw => {
-    const found = CITIES.find(c => c.toLowerCase() === String(raw).trim().toLowerCase());
-    if (!found) {
-      status.textContent = "Не нашёл такой город. Напишите название ещё раз.";
-      status.dataset.state = "error";
-      field.setAttribute("aria-invalid", "true");
+    const q = normCity(raw);
+    const exact = CITIES.find(c => normCity(cityLabel(c)) === q);
+    const sameName = CITIES.filter(c => normCity(c.name) === q);
+    if (exact) return apply(exact);
+    if (sameName.length === 1) return apply(sameName[0]);
+    if (sameName.length > 1) {
+      status.textContent = "Уточните город: подойдёт несколько вариантов.";
+      status.dataset.state = "clarify";
+      field.removeAttribute("aria-invalid");
+      showOptions(sameName);
+      field.focus();
       return;
     }
-    currentCity = found;
-    cityValue.textContent = found;
-    $("weather").textContent = found;
-    field.value = found;
+    status.textContent = "Не нашёл такой город. Напишите название ещё раз.";
+    status.dataset.state = "error";
+    field.setAttribute("aria-invalid", "true");
+  };
+
+  const apply = chosen => {
+    currentCity = chosen;
+    cityValue.textContent = cityLabel(chosen);
+    $("weather").textContent = chosen.name;
+    field.value = cityLabel(chosen);
     field.removeAttribute("aria-invalid");
     status.textContent = "Город сохранён.";
     status.dataset.state = "saved";
     collapse();
   };
 
-  const choose = name => { field.value = name; saveCity(name); field.focus(); };
+  const choose = c => { field.value = cityLabel(c); apply(c); field.focus(); };
 
   field.oninput = () => {
     status.textContent = ""; delete status.dataset.state;
     field.removeAttribute("aria-invalid");
-    const q = field.value.trim().toLowerCase();
-    list.innerHTML = "";
-    const found = q ? CITIES.filter(c => c.toLowerCase().includes(q)).slice(0, 5) : [];
-    found.forEach(c => {
-      const li = el("li");
-      const b = el("button", null, c); b.type = "button";
-      b.onclick = () => choose(c);
-      li.append(b); list.append(li);
-    });
-    list.hidden = found.length === 0;
-    field.setAttribute("aria-expanded", String(found.length > 0));
+    const q = normCity(field.value);
+    if (!q) return showOptions([]);
+    showOptions(CITIES.filter(c => normCity(c.name).includes(q) || normCity(c.region).includes(q)).slice(0, 5));
   };
   field.onkeydown = e => {
     if (e.key === "Enter") { e.preventDefault(); saveCity(field.value); }
