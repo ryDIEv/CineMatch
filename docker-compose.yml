@@ -8,7 +8,10 @@ services:
       dockerfile: Dockerfile.backend
     image: cinematch-backend:local
     env_file:
-      - .env
+      # .env может отсутствовать: тогда backend сам остановится с CONFIG_MISSING
+      # (config.md §1, п. 1), а не compose с ошибкой «env file not found».
+      - path: .env
+        required: false
     environment:
       # Файл базы в контейнере — в томе data (config.md §1, data/165 §1).
       CINEMATCH_DB_PATH: /data/cinematch.db

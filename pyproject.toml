@@ -34,7 +34,9 @@ packages = ["cinematch"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+# Тесты с настоящей моделью помечаются `llm` и по умолчанию не запускаются:
+# прогон с моделью — `uv run pytest -m llm` (AGENTS.md, documents/testing/ts-ag.md).
+addopts = "-q -m 'not llm'"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
@@ -44,6 +46,10 @@ markers = [
 [tool.ruff]
 target-version = "py314"
 line-length = 100
+# Документация содержит примеры кода в Markdown: ruff не должен их
+# переформатировать, иначе правка кода задевает чужие документы
+# (AGENTS.md, порядок работы, п. 5).
+extend-exclude = ["documents"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]

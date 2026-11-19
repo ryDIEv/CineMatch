@@ -63,6 +63,22 @@ def test_paths_and_long_texts_are_dropped() -> None:
     assert record["payload"] == {"step": "Поиск"}
 
 
+def test_api_keys_and_auth_headers_are_dropped() -> None:
+    """Ключи вида sk-… и заголовки авторизации не попадают в журнал (NFR-AG-08)."""
+    record = build_record(
+        "llm_call",
+        payload={
+            "action": "sk-proj-AbCdEf123456789",
+            "code": "Bearer abc.def.ghi",
+            "tool": "sk_live_51HabcXYZ",
+            "layer": "basic dXNlcjpwYXNz",
+            "step": "Поиск",
+        },
+    )
+
+    assert record["payload"] == {"step": "Поиск"}
+
+
 def test_write_event_is_one_json_line() -> None:
     import io
 

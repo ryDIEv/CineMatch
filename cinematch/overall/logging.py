@@ -67,7 +67,11 @@ def _looks_sensitive(value: Any) -> bool:
     # Тексты сообщений и промпты длиннее любого служебного значения.
     if len(value) > 200:
         return True
-    # Ключи вида sk-..., длинные hex-строки.
+    # Ключи провайдеров и заголовки авторизации (NFR-AG-08).
+    lowered = value.lower()
+    if lowered.startswith(("sk-", "sk_", "bearer ", "basic ", "token ")):
+        return True
+    # Длинные hex-строки без префикса (старые ключи, хэши).
     return len(value) >= 32 and all(c in "0123456789abcdefABCDEF-" for c in value)
 
 

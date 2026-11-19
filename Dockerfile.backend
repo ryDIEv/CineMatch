@@ -28,7 +28,8 @@ RUN useradd --create-home --uid 10001 cinematch \
     && chown -R cinematch:cinematch /data /app
 USER cinematch
 
-ENV CINEMATCH_DB_PATH=/data/cinematch.db
+# CINEMATCH_DB_PATH здесь не задаётся: путь в контейнере задаёт только
+# docker-compose.yml (config.md §1, п. 2), чтобы значение не расходилось.
 EXPOSE 8000
 
 # Порт backend не публикуется наружу: трафик идёт через nginx (ui/165).

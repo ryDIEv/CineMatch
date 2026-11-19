@@ -19,11 +19,34 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 MODULES = ("agents", "data", "ui")
-EXPECTED = "010 020 030 040 050 060 070 075 080 090 095 110 115 120 130 135 140 145 146 150 155 160 165".split()
+EXPECTED = [
+    "010",
+    "020",
+    "030",
+    "040",
+    "050",
+    "060",
+    "070",
+    "075",
+    "080",
+    "090",
+    "095",
+    "110",
+    "115",
+    "120",
+    "130",
+    "135",
+    "140",
+    "145",
+    "146",
+    "150",
+    "155",
+    "160",
+    "165",
+]
 AGENT_EXTRA = {"125"}
 ENV_RE = re.compile(r"`((?:LLM|TMDB|CINEMATCH|AGENT|TELEGRAM|CLI|TURN)_[A-Z_]+)`")
 
@@ -107,8 +130,13 @@ def check_links() -> None:
                 ]
                 if not any(os.path.exists(c) for c in candidates):
                     broken.append(f"{rel}:{line_no} -> {target}")
-            for target in re.findall(r"`([\w./-]+\.(?:md|puml|svg|png|json|ya?ml|py|ts|tsx|html))`", line):
-                if "/" not in target or target.startswith(("cinematch/", "migrations/", "tests/", "scripts/")) or "YYYY" in target:
+            stale_path = re.compile(r"`([\w./-]+\.(?:md|puml|svg|png|json|ya?ml|py|ts|tsx|html))`")
+            for target in stale_path.findall(line):
+                if (
+                    "/" not in target
+                    or target.startswith(("cinematch/", "migrations/", "tests/", "scripts/"))
+                    or "YYYY" in target
+                ):
                     continue
                 candidates = [
                     os.path.normpath(os.path.join(os.path.dirname(path), target)),
@@ -168,7 +196,22 @@ def check_env() -> None:
         report("переменные окружения", [".env.example не найден"])
         return
     in_example = set(re.findall(r"(?m)^([A-Z_]+)=", read(example)))
-    non_config = {"LLM_UNAVAILABLE", "LLM_INVALID_OUTPUT", "DATA_UNAVAILABLE", "AGENT_TIMEOUT", "SESSION_BUSY", "CATALOG_EMPTY", "INPUT_TOO_LONG", "INVALID_INPUT", "LIMIT_EXCEEDED", "CITY_NOT_FOUND", "LLM_MODE", "LLM_PROVIDER", "TELEGRAM_BOT_TOKEN", "CLI_USER_ID"}
+    non_config = {
+        "LLM_UNAVAILABLE",
+        "LLM_INVALID_OUTPUT",
+        "DATA_UNAVAILABLE",
+        "AGENT_TIMEOUT",
+        "SESSION_BUSY",
+        "CATALOG_EMPTY",
+        "INPUT_TOO_LONG",
+        "INVALID_INPUT",
+        "LIMIT_EXCEEDED",
+        "CITY_NOT_FOUND",
+        "LLM_MODE",
+        "LLM_PROVIDER",
+        "TELEGRAM_BOT_TOKEN",
+        "CLI_USER_ID",
+    }
     docs_folder = os.path.join(ROOT, "documents")
     in_docs = set()
     for module in MODULES:
