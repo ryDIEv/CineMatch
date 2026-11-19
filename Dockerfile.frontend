@@ -1,0 +1,9 @@
+# Frontend CineMatch на каркасе: nginx отдаёт заглушку и проксирует /api.
+# Сборка React появится в модуле интерфейса; nginx.conf останется (ui/165).
+FROM nginx:alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Файлы модуля живут внутри пакета (build.md §2); сюда же придёт сборка Vite.
+COPY cinematch/interfaces/web/index.html /usr/share/nginx/html/index.html
+
+EXPOSE 8080

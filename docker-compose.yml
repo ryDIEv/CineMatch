@@ -1,0 +1,46 @@
+# CineMatch: backend (FastAPI) и frontend (nginx) — build.md §2, ui/165.
+# Backend порт наружу не публикует: API доступен через nginx на 8080.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: cinematch-backend:local
+    env_file:
+      # .env может отсутствовать: тогда backend сам остановится с CONFIG_MISSING
+      # (config.md §1, п. 1), а не compose с ошибкой «env file not found».
+      - path: .env
+        required: false
+    environment:
+      # Файл базы в контейнере — в томе data (config.md §1, data/165 §1).
+      CINEMATCH_DB_PATH: /data/cinematch.db
+    volumes:
+      - data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: cinematch-frontend:local
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  data:
