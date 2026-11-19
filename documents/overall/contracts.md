@@ -164,13 +164,15 @@
 | Поле | Тип | Описание |
 |---|---|---|
 | `stage` | string | `consent`, `onboarding`, `dialog`, `confirm_delete` |
-| `pending` | object или null | `{choice_id, movie_id}` — кэш неоценённого выбора; источник истины — таблица выборов |
-| `city_options` | object[] | до 5 вариантов `{name, region, country, latitude, longitude}` для этапа `onboarding`; пусто — вариантов нет |
-| `messages` | array | до 20 последних сообщений в формате истории модели; `/start` в историю не попадает |
+| `pending` | `PendingChoice` или null | `{choice_id, movie_id}` — кэш неоценённого выбора; источник истины — таблица выборов |
+| `city_options` | `CityVariant[]` | до 5 вариантов `{name, region, country, latitude, longitude}` для этапа `onboarding`; пусто — вариантов нет; структура — §2.9 |
+| `messages` | array | до 20 последних сообщений в формате Pydantic AI, сериализованных `ModelMessagesTypeAdapter` в JSON-режиме (`model_dump(mode="json")`); `/start` в историю не попадает |
 | `context` | EveningContext или null | накопленный контекст вечера: непустые поля заменяют прежние, `null` оставляет прежнее, `[]` у жанровых списков очищает прежнее |
 | `last_shown_ids` | int[] | фильмы последней подборки, до 3 |
 | `shown_ids` | int[] | до 50 последних показанных фильмов; старые вытесняются |
 | `clarifications_asked` | int | вопросов в текущем подборе; сбрасывается после показа подборки |
+
+`pending` — модель `PendingChoice`, поля ровно `{choice_id: int, movie_id: int}`; других полей у неё нет. `messages` — `list[dict]`: элементы истории модели (`role`, `parts`, …) в том виде, в каком их сериализует `ModelMessagesTypeAdapter` Pydantic AI; в `messages` не попадают тексты системных промптов. Пределы (`messages` ≤ 20, `shown_ids` ≤ 50, `last_shown_ids` ≤ 3) соблюдает оркестратор, модель их не проверяет.
 
 ### 2.6. AgentOutput — структурированный ответ агента
 
@@ -205,6 +207,18 @@
 | `no` | `confirm_delete`, `consent` | отменяет действие этапа |
 
 Промпты классификатора — [125 модуля агентов](../agents/125.prompts.md). На этапе `dialog` применяется промпт на 4 класса, на этапах `confirm_delete` и `consent` — на 2 класса.
+
+### 2.9. CityVariant — вариант города
+
+Общая модель: её используют `SessionState.city_options` (этап `onboarding`) и ответ `GET /api/v1/cities` (ui/130). Поля совпадают с результатом `resolve_city` ([130 модуля данных](../data/130.api-contracts.md#412-resolve_city)).
+
+| Поле | Тип | Ограничения |
+|---|---|---|
+| `name` | string | название города из Open-Meteo |
+| `region` | string или null | регион; `null` — не указан |
+| `country` | string | страна |
+| `latitude` | float | широта, −90…90 |
+| `longitude` | float | долгота, −180…180 |
 
 ## 3. Сообщения о ходе работы
 
@@ -300,7 +314,7 @@ async def set_consent(user_id: str, accepted: bool) -> AgentResponse
 
 1. Ошибки, которые возвращаются модели (`INVALID_PARAM`, `UNKNOWN_GENRE`, `NOT_FOUND`), пользователю не показываются: модель получает их как результат инструмента и исправляет вызов.
 2. Остальные коды показываются дословно текстом из таблицы. Других текстов ошибок в коде нет: запрет на «выдуманное» сообщение вместо ошибки зафиксирован в [110](../agents/110.ui-ux.md) и ADR-035.
-3. Каждая ошибка пишется в журнал полями: `event=error`, `code`, `layer`, `user_id`, `stage`, `duration_ms`, `retry` (bool). Текст сообщения пользователя в журнал не попадает.
+3. Каждая ошибка пишется в журнал одной записью-конвертом [140 модуля агентов](../agents/140.event-schema.md) с `event=error`: служебные поля `code`, `layer`, `stage`, `duration_ms`, `retry` (bool) лежат в `payload`, а `user_id` в конверте записывается псевдонимом — первыми 12 символами sha256. Текст сообщения пользователя в журнал не попадает.
 4. `error_code` в `AgentResponse` заполняется только при `type = "error"`; для HTTP-ответов API-слой использует то же значение.
 5. `SESSION_BUSY` — следствие правила «один активный ход на пользователя» ([146](../agents/146.logic-scheme.md)); подтверждение поведения API-слоя — в [130 модуля интерфейса](../ui/130.api-contracts.md).
 
@@ -315,6 +329,7 @@ async def set_consent(user_id: str, accepted: bool) -> AgentResponse
 5. `save_choice` принимает только фильм из последней подборки; иное — ошибка, которую видит модель.
 6. `exclude_genres` в `find_movies` реестр инструментов объединяет с `SessionState.context.genre_avoid`: модель может добавить жанры, но не может снять запрет пользователя.
 7. Инструмента удаления данных у агента нет; согласие, город и удаление — только код оркестратора.
+8. Функции модуля данных синхронные. Модуль агентов вызывает инструменты через Pydantic AI, который выполняет синхронные функции в пуле потоков; служебные функции оркестратор вызывает через `asyncio.to_thread`.
 
 ## 8. Пределы
 

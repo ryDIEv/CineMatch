@@ -1,0 +1,52 @@
+[project]
+name = "cinematch"
+version = "0.1.0"
+description = "CineMatch — подбор фильма на вечер в диалоге с ИИ-агентом"
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+
+# Зависимости и версии — documents/overall/build.md §5.
+dependencies = [
+    "fastapi==0.165.0",
+    "uvicorn==0.54.0",
+    "pydantic==2.14.4",
+    "pydantic-ai-slim[openai]==2.71.0",
+    "sqlalchemy==2.0.58",
+    "alembic==1.20.1",
+    "httpx==0.28.1",
+    "sse-starlette==3.7.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "pytest-asyncio==1.5.0",
+    "ruff==0.17.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cinematch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "llm: тесты с настоящей моделью; по умолчанию не запускаются",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# RUF001/RUF002: кириллица в строках и докстрингах — требование проекта
+# (тексты для пользователя и комментарии на русском, AGENTS.md).
+ignore = ["RUF001", "RUF002", "RUF003"]

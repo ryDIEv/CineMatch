@@ -1,0 +1,20 @@
+# Секреты и локальные данные не попадают в образ (NFR-AG-08).
+.env
+*.env
+!.env.example
+storage/
+*.db
+*.db-wal
+*.db-shm
+
+# Разработка
+.git/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+tests/
+documents/
+docs/
+.DS_Store

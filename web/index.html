@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CineMatch</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --фон: #211e33;
+        --поверхность: #2b2742;
+        --текст: #efebf8;
+        --приглушённый: #aaa3c6;
+        --акцент: #f2c46d;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at 50% 0%, #2b2742 0%, var(--фон) 70%);
+        color: var(--текст);
+        font-family: "Golos Text", system-ui, sans-serif;
+      }
+      main {
+        max-width: 34rem;
+        padding: 2.5rem;
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-family: Prata, Georgia, serif;
+        font-size: clamp(2.5rem, 8vw, 4rem);
+        font-weight: 400;
+        letter-spacing: 0.02em;
+      }
+      p {
+        margin: 0 0 0.5rem;
+        color: var(--приглушённый);
+        line-height: 1.6;
+      }
+      .билет {
+        display: inline-block;
+        margin-top: 1.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px dashed var(--акцент);
+        border-radius: 0.5rem;
+        color: var(--акцент);
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>CineMatch</h1>
+      <p>Подбор фильма на вечер в диалоге с ИИ-агентом.</p>
+      <p>Интерфейс собирается. API уже работает: <code>/api/v1/health</code>.</p>
+      <span class="билет">каркас · заглушка интерфейса</span>
+    </main>
+  </body>
+</html>

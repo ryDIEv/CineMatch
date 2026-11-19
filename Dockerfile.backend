@@ -1,0 +1,35 @@
+# Backend CineMatch: Python 3.14, uv, uvicorn (build.md §2–5, ui/165).
+FROM python:3.14-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/app/.venv
+
+WORKDIR /app
+
+# uv ставится отдельным слоем: версия фиксирована, чтобы сборки совпадали.
+COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /usr/local/bin/uv
+
+# Сначала зависимости — слой кэшируется, пока не менялись lock-файл и манифест.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+# Затем код и установка пакета.
+COPY README.md ./
+COPY cinematch ./cinematch
+RUN uv sync --frozen --no-dev
+
+# Том с базой: каталог существует и принадлежит непривилегированному пользователю
+# (data/165 §1).
+RUN useradd --create-home --uid 10001 cinematch \
+    && mkdir -p /data \
+    && chown -R cinematch:cinematch /data /app
+USER cinematch
+
+ENV CINEMATCH_DB_PATH=/data/cinematch.db
+EXPOSE 8000
+
+# Порт backend не публикуется наружу: трафик идёт через nginx (ui/165).
+CMD ["/app/.venv/bin/uvicorn", "cinematch.interfaces.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
