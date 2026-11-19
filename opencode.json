@@ -1,0 +1,54 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "routerai": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "RouterAI",
+      "options": {
+        "baseURL": "https://routerai.ru/api/v1",
+        "apiKey": "{env:ROUTERAI_API_KEY}"
+      },
+      "models": {
+        "deepseek/deepseek-v4.1-flash-1017": {
+          "name": "DeepSeek V4.1 Flash 1017",
+          "capabilities": {
+              "tools": true,
+              "input": ["text", "image", "pdf"],
+              "output": ["text"]
+          }
+        }
+      }
+    }
+  },
+  "model": "routerai/deepseek/deepseek-v4.1-flash-1017",
+  "small_model": "routerai/deepseek/deepseek-v4.1-flash-1017",
+  "instructions": [
+    "documents/overall/contracts.md",
+    "documents/overall/config.md",
+    "documents/overall/build.md"
+  ],
+  "permission": {
+    "edit": {
+      "*": "allow",
+      ".env": "deny"
+    },
+    "bash": {
+      "*": "ask",
+      "uv sync*": "allow",
+      "uv add*": "ask",
+      "uv run pytest*": "allow",
+      "uv run ruff*": "allow",
+      "python scripts/check_docs.py*": "allow",
+      "uv run python scripts/check_docs.py*": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git push*": "deny",
+      "git reset --hard*": "deny",
+      "rm -rf*": "deny",
+      "cat .env": "deny"
+    },
+    "webfetch": "ask"
+  },
+  "autoupdate": "notify"
+}
