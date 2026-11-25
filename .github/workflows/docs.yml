@@ -15,3 +15,11 @@ jobs:
           python-version: "3.12"
       - name: Проверка документации
         run: python scripts/check_docs.py
+      - name: Установка uv и зависимостей
+        run: |
+          pip install uv
+          uv sync --frozen
+      - name: Тесты
+        run: uv run pytest -q
+      - name: Стиль
+        run: uv run ruff check .

@@ -21,11 +21,14 @@ O --> API : AgentResponse(question)
 API -> O : handle_user_turn("один, без ужасов")
 O -> M : классификатор запроса
 M --> O : cinema
-O -> A : ответ + история сессии
+O -> D : get_user_profile()
+D --> O : веса жанров
+O -> O : трасса «Оценки: профиль учтён»
+O -> A : ответ + история сессии + {profile}
 A -> M : ответ
-M --> A : tool_use get_weather, get_user_profile
-A -> D : get_weather(), get_user_profile()
-D --> A : погода, профиль
+M --> A : tool_use get_weather, get_user_ratings
+A -> D : get_weather(), get_user_ratings()
+D --> A : погода, оценки
 A -> M : результаты
 M --> A : tool_use find_movies(критерии)
 A -> D : find_movies(..., exclude_ids)
