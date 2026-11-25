@@ -23,7 +23,7 @@ O -> M : классификатор запроса
 M --> O : cinema
 O -> D : get_user_profile()
 D --> O : веса жанров
-O -> O : трасса «Оценки: профиль учтён»
+O -> O : трасса: «Оценки» — «профиль из оценок»
 O -> A : ответ + история сессии + {profile}
 A -> M : ответ
 M --> A : tool_use get_weather, get_user_ratings
