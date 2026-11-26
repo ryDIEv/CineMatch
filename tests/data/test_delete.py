@@ -122,6 +122,31 @@ def test_ts_db_08_purge_expired_removes_only_expired(data_db, session: Session) 
     assert _count(session, SessionRow) == 0
 
 
+def test_ts_db_08_purge_expired_writes_event(
+    data_db, session: Session, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Очистка пишет `SessionExpired` с `user_id = null` и числом строк (data/140)."""
+    load_seed(session)
+    save_session_state(TEST_USER, SessionState(stage="dialog"))
+    row = session.get(SessionRow, TEST_USER)
+    assert row is not None
+    row.expires_at = "2000-01-01T00:00:00Z"
+    session.commit()
+    capsys.readouterr()
+
+    purge_expired()
+
+    records = [
+        json.loads(line)
+        for line in capsys.readouterr().out.splitlines()
+        if line.startswith("{")
+    ]
+    events = [record for record in records if record["event"] == "SessionExpired"]
+    assert len(events) == 1
+    assert events[0]["user_id"] is None
+    assert events[0]["payload"] == {"sessions": 1}
+
+
 def test_ts_db_08_expired_session_is_dropped_on_read(data_db, session: Session) -> None:
     """Просроченная сессия удаляется при чтении и возвращает `None` (data/120 §6)."""
     load_seed(session)

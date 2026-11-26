@@ -7,12 +7,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
-from sqlalchemy import Row, and_, func, literal, or_, select
+from sqlalchemy import Row, and_, delete, func, literal, or_, select
 from sqlalchemy.orm import Session
 
+from cinematch.data.clients.tmdb import CastRef, GenreRef, MovieRecord
+from cinematch.data.db import utc_now
 from cinematch.data.models import (
     Genre,
     Movie,
@@ -21,8 +23,10 @@ from cinematch.data.models import (
     Person,
     UserChoice,
     UserRating,
+    normalize_text,
 )
 from cinematch.overall.contracts import MovieCard
+from cinematch.overall.logging import write_event
 
 POSTER_BASE = "https://image.tmdb.org/t/p/w342"
 
@@ -359,3 +363,126 @@ def mood_penalty_genres(session: Session, user_id: str, mood: str) -> set[str]:
         .distinct()
     ).all()
     return {name for (name,) in rows}
+
+
+# --- Загрузка каталога: справочник жанров — data/130 §7.1, §7.3 ------------
+
+
+def upsert_genres(session: Session, genres: Sequence[GenreRef]) -> None:
+    """Загрузить справочник целиком: обновить существующие, добавить новые.
+
+    Жанр, которого нет в TMDB, не удаляется: на него ссылаются фильмы
+    (data/130 §9, п. 4). Одна транзакция — data/146 §2.
+    """
+    existing = {genre.tmdb_id: genre for genre in session.scalars(select(Genre))}
+    for ref in genres:
+        row = existing.get(ref.tmdb_id)
+        if row is None:
+            session.add(
+                Genre(tmdb_id=ref.tmdb_id, name=ref.name, name_norm=normalize_text(ref.name))
+            )
+            continue
+        row.name = ref.name
+        row.name_norm = normalize_text(ref.name)
+    session.flush()
+
+
+def genre_ids_by_tmdb(session: Session) -> dict[int, int]:
+    """Справочник `tmdb_id → genres.id` для перевода жанров фильма (§7.2)."""
+    return dict(session.execute(select(Genre.tmdb_id, Genre.id)).all())
+
+
+# --- Загрузка каталога: порция — data/120 §3–4, data/130 §7.3 -------------
+
+
+def upsert_movie(
+    session: Session, record: MovieRecord, genre_ids: Mapping[int, int]
+) -> tuple[Movie, bool]:
+    """Upsert фильма по `tmdb_id`, замена жанров и актёров (§7.3, п. 4).
+
+    `movies.id` не меняется, поэтому оценки и выборы переживают перезагрузку.
+    Возвращает строку и признак «вставлен» для счётчика `inserted`.
+    """
+    movie = session.scalar(select(Movie).where(Movie.tmdb_id == record.tmdb_id))
+    inserted = movie is None
+    if movie is None:
+        movie = Movie(
+            tmdb_id=record.tmdb_id,
+            title=record.title,
+            title_norm=normalize_text(record.title),
+            original_title=record.original_title,
+            year=record.year,
+            runtime=record.runtime,
+            rating=record.rating,
+            vote_count=record.vote_count,
+            popularity=record.popularity,
+            age_rating=record.age_rating,
+            overview=record.overview,
+            poster_path=record.poster_path,
+            adult=record.adult,
+            updated_at=utc_now(),
+        )
+        session.add(movie)
+        session.flush()
+    else:
+        movie.title = record.title
+        movie.title_norm = normalize_text(record.title)
+        movie.original_title = record.original_title
+        movie.year = record.year
+        movie.runtime = record.runtime
+        movie.rating = record.rating
+        movie.vote_count = record.vote_count
+        movie.popularity = record.popularity
+        movie.age_rating = record.age_rating
+        movie.overview = record.overview
+        movie.poster_path = record.poster_path
+        movie.adult = record.adult
+        movie.updated_at = utc_now()
+
+    # Наборы заменяются целиком: удаление и вставка в той же транзакции.
+    session.execute(delete(MovieGenre).where(MovieGenre.movie_id == movie.id))
+    known: list[int] = []
+    for ref in record.genres:
+        genre_id = genre_ids.get(ref.tmdb_id)
+        if genre_id is None:
+            # §7.2: неизвестный жанр пропускается; факт пишется в журнал.
+            # Запись ошибки — `event=error` с `code` и `layer` (data/140 §2, п. 6);
+            # `stage` не передаётся: перечень этапов относится к диалогу.
+            write_event(
+                "error",
+                payload={"code": "UNKNOWN_GENRE", "layer": "data"},
+            )
+            continue
+        if genre_id not in known:
+            known.append(genre_id)
+            session.add(MovieGenre(movie_id=movie.id, genre_id=genre_id))
+
+    session.execute(delete(MovieCast).where(MovieCast.movie_id == movie.id))
+    for actor in record.cast:
+        person = _upsert_person(session, actor)
+        session.add(
+            MovieCast(
+                movie_id=movie.id,
+                person_id=person.id,
+                # Индекс элемента в исходном `credits.cast` (data/120 §4), а не
+                # номер в уже отфильтрованном списке: пропуски допустимы.
+                billing_order=actor.billing_order,
+                character=actor.character,
+            )
+        )
+
+    session.flush()
+    return movie, inserted
+
+
+def _upsert_person(session: Session, actor: CastRef) -> Person:
+    """Человек по `tmdb_id`: обновить имя или добавить (data/120 §4)."""
+    person = session.scalar(select(Person).where(Person.tmdb_id == actor.tmdb_id))
+    if person is None:
+        person = Person(tmdb_id=actor.tmdb_id, name=actor.name)
+        session.add(person)
+        session.flush()
+    else:
+        person.name = actor.name
+    return person
+

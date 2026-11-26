@@ -9,15 +9,19 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Iterator
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from cinematch.data import api as data_api
 from cinematch.data import db
+from cinematch.data.clients.weather import WeatherClient
 from cinematch.data.db import init_database, utc_now
 from cinematch.data.models import Genre, Movie, MovieCast, MovieGenre, Person, User, normalize_text
+from tests.data.external import TmdbMock, WeatherMock
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 SEED_MOVIES = FIXTURES / "seed_movies.json"
@@ -128,3 +132,46 @@ def load_seed(session: Session, *, user_id: str = TEST_USER) -> list[Movie]:
 def ids(cards: Iterable[object]) -> list[int]:
     """Идентификаторы карточек или строк в порядке выдачи."""
     return [getattr(card, "movie_id", card) for card in cards]
+
+
+@dataclass
+class ExternalCalls:
+    """Записанные паузы клиента TMDB: проверка темпа и ряда повторов."""
+
+    sleeps: list[float] = field(default_factory=list)
+
+
+@pytest.fixture
+def tmdb(
+    monkeypatch: pytest.MonkeyPatch, data_db: Engine
+) -> Iterator[tuple[TmdbMock, ExternalCalls]]:
+    """Подменить транспорт TMDB и паузы: сеть и задержки в тестах не участвуют.
+
+    `TMDB_API_KEY` задаётся здесь же: иначе загрузка остановится до запросов
+    (data/110 §2, `CONFIG_MISSING`).
+    """
+    mock = TmdbMock()
+    calls = ExternalCalls()
+    monkeypatch.setenv("TMDB_API_KEY", "test-key")
+    monkeypatch.setattr(data_api, "TMDB_TRANSPORT", mock.transport())
+    monkeypatch.setattr(data_api, "SLEEP", calls.sleeps.append)
+    try:
+        yield mock, calls
+    finally:
+        monkeypatch.setattr(data_api, "TMDB_TRANSPORT", None)
+
+
+@pytest.fixture
+def open_meteo(
+    monkeypatch: pytest.MonkeyPatch, data_db: Engine
+) -> Iterator[tuple[WeatherMock, WeatherClient]]:
+    """Подменить транспорт Open-Meteo и сбросить кэш погоды процесса (§8.4)."""
+    mock = WeatherMock()
+    client = WeatherClient(transport=mock.transport())
+    monkeypatch.setattr(data_api, "WEATHER_TRANSPORT", None)
+    monkeypatch.setattr(data_api, "_weather_client", client)
+    try:
+        yield mock, client
+    finally:
+        client.close()
+        monkeypatch.setattr(data_api, "_weather_client", None)

@@ -7,6 +7,6 @@ SQL живёт только здесь и в `db.py` (data/150 §1). Функц�
 
 from __future__ import annotations
 
-from . import catalog, choices, ratings, sessions, users
+from . import catalog, choices, loads, ratings, sessions, users
 
-__all__ = ["catalog", "choices", "ratings", "sessions", "users"]
+__all__ = ["catalog", "choices", "loads", "ratings", "sessions", "users"]

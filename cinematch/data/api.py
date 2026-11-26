@@ -7,17 +7,27 @@ API-слой (data/150 §1, п. 3). Сигнатуры, проверки, оши
 Функции синхронные (ADR-047): Pydantic AI выполняет их в пуле потоков, а
 оркестратор вызывает служебные функции через `asyncio.to_thread`.
 
-`get_weather`/`resolve_city` (data/130 §4.3, §4.12) и `ingest_movies` (§4.19)
-приходят следующими задачами; пока заглушки с `NotImplementedError`.
+`get_weather` и `resolve_city` (§4.3, §4.12) работают через `clients/weather.py`,
+`ingest_movies` (§4.19) — через `clients/tmdb.py`; сеть и паузы подменяются
+модульными `WEATHER_TRANSPORT`, `TMDB_TRANSPORT`, `SLEEP` только в тестах.
 """
 
 from __future__ import annotations
 
+import contextlib
+import os
+import sys
+import time
+
+import httpx
 from sqlalchemy.orm import Session
 
 from cinematch.data import db
+from cinematch.data.clients import tmdb as tmdb_client
+from cinematch.data.clients.tmdb import IngestError, MovieRecord, TmdbClient
+from cinematch.data.clients.weather import WeatherClient, WeatherNow
 from cinematch.data.models import normalize_text
-from cinematch.data.repositories import catalog, choices, ratings, sessions, users
+from cinematch.data.repositories import catalog, choices, loads, ratings, sessions, users
 from cinematch.data.schemas import (
     HistoryItem,
     MovieDetails,
@@ -28,6 +38,7 @@ from cinematch.data.schemas import (
     Weather,
 )
 from cinematch.data.services.profile import build_profile
+from cinematch.overall.config import ENV_FILE, _parse_env_file
 from cinematch.overall.contracts import CityVariant, Mood, MovieCard, SessionState
 from cinematch.overall.errors import ErrorCode, ServiceError, ToolError
 from cinematch.overall.logging import write_event
@@ -36,6 +47,15 @@ MOODS = {"calm", "cheerful", "sad", "tired", "tense", "other"}
 MOOD_MATCHES = {"yes", "partly", "no"}
 RATING_SOURCES = {"after_choice", "manual"}
 USER_SOURCES = {"web"}
+
+# Подмена внешних транспортов и пауз — только для тестов (сеть и задержки).
+# Клиенты создаются с этими значениями; в обычной работе они `None` и `time.sleep`.
+TMDB_TRANSPORT: httpx.BaseTransport | None = None
+WEATHER_TRANSPORT: httpx.BaseTransport | None = None
+SLEEP = time.sleep
+
+# Кэш погоды живёт в процессе (data/130 §8.4); клиент создаётся при первом вызове.
+_weather_client: WeatherClient | None = None
 
 # Пределы параметров — data/130 §4.
 MAX_GENRES = 5
@@ -151,9 +171,53 @@ def get_user_profile(user_id: str) -> PreferenceProfile:
         return build_profile(session, user_id)
 
 
+def _tmdb_api_key() -> str:
+    """Ключ `TMDB_API_KEY`: окружение важнее `.env` (config.md §1, п. 6).
+
+    Пустое значение — остановка загрузки: `CONFIG_MISSING TMDB_API_KEY`,
+    exit code 2 (data/110 §2).
+    """
+    raw = os.environ.get("TMDB_API_KEY", "").strip()
+    if not raw:
+        raw = _parse_env_file(ENV_FILE).get("TMDB_API_KEY", "").strip()
+    if not raw:
+        raise IngestError("unauthorized", "CONFIG_MISSING TMDB_API_KEY")
+    return raw
+
+
+def _weather() -> WeatherClient:
+    """Клиент Open-Meteo процесса; кэш переживает вызовы (data/130 §8.4)."""
+    global _weather_client
+    if _weather_client is None:
+        _weather_client = WeatherClient(transport=WEATHER_TRANSPORT)
+    return _weather_client
+
+
 def get_weather(user_id: str) -> Weather | None:
-    """Погода пользователя — data/130 §4.3; следующая задача (Open-Meteo)."""
-    raise NotImplementedError("get_weather реализуется в следующей задаче (data/130 §4.3)")
+    """Погода города пользователя — data/130 §4.3, §8.
+
+    `None`, если города нет или сервис недоступен: погода — подсказка, а не
+    условие подбора, поэтому отказа сети наружу не выходит (§4.3).
+    """
+    with db.translate_db_errors(), db.session_scope() as session:
+        user = users.get_user(session, user_id)
+        if user is None or not user.city:
+            return None
+        city = user.city
+        latitude = user.latitude
+        longitude = user.longitude
+
+    if latitude is None or longitude is None:
+        return None
+    current: WeatherNow | None = _weather().forecast(latitude, longitude)
+    if current is None:
+        return None
+    return Weather(
+        city=city,
+        condition=current.condition,
+        temp_c=current.temp_c,
+        is_day=current.is_day,
+    )
 
 
 def find_movies(
@@ -385,13 +449,23 @@ def save_consent(user_id: str, source: str) -> None:
 
 
 def resolve_city(name: str) -> list[CityVariant]:
-    """Варианты города — data/130 §4.12; следующая задача (Open-Meteo).
+    """Варианты города — data/130 §4.12, §8.1.
 
-    Проверка `name` — 1…100 символов после обрезки (`INVALID_PARAM`) — часть
-    контракта функции и выполняется уже сейчас.
+    До пяти вариантов из Open-Meteo Geocoding; пустой список — город не найден,
+    оркестратор отвечает `CITY_NOT_FOUND` (contracts §6). Отказ сервиса тоже
+    даёт пустой список: `resolve_city` не бросает сетевое исключение наружу.
     """
-    _require_str(name, "name", 100)
-    raise NotImplementedError("resolve_city реализуется в следующей задаче (data/130 §4.12)")
+    query = _require_str(name, "name", 100)
+    return [
+        CityVariant(
+            name=city.name,
+            region=city.region,
+            country=city.country,
+            latitude=city.latitude,
+            longitude=city.longitude,
+        )
+        for city in _weather().search_city(query)
+    ]
 
 
 def save_user_settings(user_id: str, city: str, latitude: float, longitude: float) -> None:
@@ -501,9 +575,20 @@ def delete_user_data(user_id: str) -> dict[str, dict[str, int]]:
 
 
 def purge_expired() -> int:
-    """Удалить сессии с `expires_at <= now` — data/130 §4.18."""
+    """Удалить сессии с `expires_at <= now` — data/130 §4.18.
+
+    Событие `SessionExpired` пакетное: `user_id = null`, в `payload` только
+    число удалённых строк (data/140 §1, п. 2).
+    """
     with db.translate_db_errors(), db.session_scope() as session:
-        return sessions.purge_expired(session)
+        removed = sessions.purge_expired(session)
+    if removed:
+        # Пакетная запись: `user_id = null`, в `payload` только число строк
+        # (data/140 §1, п. 2). Пустой результат не публикуется: событие
+        # «сессия истекла» без истёкших сессий ничего не сообщает, а старт
+        # backend вызывает `purge_expired` каждый раз (build.md §3, шаг 5).
+        write_event("SessionExpired", payload={"sessions": removed})
+    return removed
 
 
 def ingest_movies(
@@ -512,17 +597,195 @@ def ingest_movies(
     min_votes: int = 100,
     resume: bool = False,
 ) -> dict[str, object]:
-    """Загрузка каталога из TMDB — data/130 §4.19; следующая задача.
+    """Загрузка каталога из TMDB — data/130 §4.19, §7; UC-9 (data/060).
 
-    Границы `pages` 1…500, `from_year` 1900…2030, `min_votes` 0…100 000 и тип
-    `resume` — часть контракта, поэтому проверяются до заглушки.
+    Алгоритм — data/146 §2: запись `catalog_loads` (`running` или найденная
+    при `resume`), справочник жанров одной транзакцией, затем страницы: одна
+    транзакция на страницу, `last_page` фиксируется после коммита.
+
+    Отчёт: `{load_id, status, pages_done, movies_upserted, movies_skipped,
+    last_page, duration_s}` (§4.19). Прерывание `Ctrl+C` коммитит текущую
+    страницу и даёт `partial`; 401 — `failed` и `IngestError`, исчерпанные
+    повторы — `partial` и `IngestError` (§7.4–§7.5).
     """
-    _require_int(pages, "pages", 1, 500)
-    _require_int(from_year, "from_year", MIN_YEAR, MAX_YEAR)
-    _require_int(min_votes, "min_votes", 0, 100_000)
+    pages = _require_int(pages, "pages", 1, 500)
+    from_year = _require_int(from_year, "from_year", MIN_YEAR, MAX_YEAR)
+    min_votes = _require_int(min_votes, "min_votes", 0, 100_000)
     if not isinstance(resume, bool):
         raise _invalid("resume: ожидается логическое значение")
-    raise NotImplementedError("ingest_movies реализуется в следующей задаче (data/130 §4.19)")
+
+    started = time.monotonic()
+    api_key = _tmdb_api_key()
+    params = loads.params_json(pages, from_year, min_votes)
+
+    with db.translate_db_errors(), db.session_scope() as session:
+        load = loads.find_resumable(session, params) if resume else None
+        if load is None:
+            load = loads.create_load(session, params)
+            start_page = 1
+            resumed = False
+        else:
+            loads.mark_running(session, load)
+            start_page = load.last_page + 1
+            resumed = True
+        load_id = load.id
+
+    write_event(
+        "CatalogLoadStarted",
+        payload={
+            "load_id": load_id,
+            "pages": pages,
+            "from_year": from_year,
+            "min_votes": min_votes,
+            "resumed": resumed,
+        },
+    )
+
+    progress_shown = False
+
+    def finish(status: str) -> dict[str, object]:
+        """Терминальный статус и отчёт §4.19; вызывается ровно один раз."""
+        if progress_shown:
+            _end_progress()
+        duration_s = round(time.monotonic() - started, 1)
+        with db.translate_db_errors(), db.session_scope() as session:
+            row = loads.by_id(session, load_id)
+            assert row is not None
+            loads.finish(session, row, status)
+            result: dict[str, object] = {
+                "load_id": row.id,
+                "status": status,
+                "pages_done": max(row.last_page - start_page + 1, 0),
+                "movies_upserted": row.movies_upserted,
+                "movies_skipped": row.movies_skipped,
+                "last_page": row.last_page,
+                "duration_s": duration_s,
+            }
+        write_event(
+            "CatalogLoadFinished",
+            payload={
+                "load_id": result["load_id"],
+                "status": status,
+                "pages_done": result["pages_done"],
+                "movies_upserted": result["movies_upserted"],
+                "movies_skipped": result["movies_skipped"],
+                "last_page": result["last_page"],
+                "duration_s": duration_s,
+            },
+        )
+        return result
+
+    client = TmdbClient(api_key, transport=TMDB_TRANSPORT, sleep=SLEEP)
+    try:
+        genres = tmdb_client.normalize_genres(client.genre_list())
+        with db.translate_db_errors(), db.session_scope() as session:
+            catalog.upsert_genres(session, genres)
+
+        for page in range(start_page, pages + 1):
+            items = client.discover_page(page, min_votes=min_votes, from_year=from_year)
+            if not items:
+                # Страницы кончились: это успех, а не ошибка (data/146 §2).
+                break
+
+            records: list[MovieRecord] = []
+            skipped = 0
+            for item in items:
+                tmdb_id = item.get("id")
+                if isinstance(tmdb_id, bool) or not isinstance(tmdb_id, int):
+                    skipped += 1
+                    continue
+                details = client.movie_details(tmdb_id)
+                if details is None:
+                    # 404 на детали — фильм пропускается (§7.4).
+                    skipped += 1
+                    continue
+                record = tmdb_client.normalize_movie(item, details)
+                if record is None:
+                    skipped += 1
+                    continue
+                records.append(record)
+
+            with db.translate_db_errors(), db.session_scope() as session:
+                genre_ids = catalog.genre_ids_by_tmdb(session)
+                inserted = 0
+                for record in records:
+                    _, created = catalog.upsert_movie(session, record, genre_ids)
+                    inserted += 1 if created else 0
+                row = loads.by_id(session, load_id)
+                assert row is not None
+                loads.save_progress(
+                    session,
+                    row,
+                    last_page=page,
+                    upserted=len(records),
+                    skipped=skipped,
+                )
+                shown_upserted = row.movies_upserted
+                shown_skipped = row.movies_skipped
+
+            write_event(
+                "MoviesUpserted",
+                payload={
+                    "load_id": load_id,
+                    "page": page,
+                    "movies": len(records),
+                    "inserted": inserted,
+                    "updated": len(records) - inserted,
+                },
+            )
+            _print_progress(
+                page=page,
+                pages=pages,
+                films=shown_upserted,
+                skipped=shown_skipped,
+                started=started,
+            )
+            progress_shown = True
+    except KeyboardInterrupt:
+        # Текущая порция уже закоммичена; прерывание не теряет страницу (§7.5, п. 3).
+        result = finish("partial")
+        raise IngestError(
+            "interrupted",
+            f"Загрузка прервана на странице {result['last_page']}.",
+            report=result,
+        ) from None
+    except IngestError as error:
+        status = "failed" if error.reason == "unauthorized" else "partial"
+        raise IngestError(error.reason, error.message, report=finish(status)) from error
+    except ServiceError:
+        # Ошибка базы: уже зафиксированные порции остаются (data/146 §2, п. 4).
+        # Сбой записи статуса не должен скрыть исходную ошибку базы.
+        with contextlib.suppress(ServiceError):
+            finish("failed")
+        raise
+    finally:
+        client.close()
+
+    return finish("completed")
+
+
+def _print_progress(
+    *, page: int, pages: int, films: int, skipped: int, started: float
+) -> None:
+    """Строка прогресса в stderr без переносов — data/110 §1.
+
+    Печатается на каждой странице независимо от терминала: при перенаправлении
+    вывода `\\r` — разделитель, а отчёт всё равно идёт в stdout.
+    """
+    elapsed = int(time.monotonic() - started)
+    hours, rest = divmod(elapsed, 3600)
+    minutes, seconds = divmod(rest, 60)
+    stamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}" if hours else f"{minutes:02d}:{seconds:02d}"
+    sys.stderr.write(
+        f"\rpage {page}/{pages}  films {films}  skipped {skipped}  elapsed {stamp}"
+    )
+    sys.stderr.flush()
+
+
+def _end_progress() -> None:
+    """Закрыть строку прогресса перед отчётом или ошибкой (data/110 §1)."""
+    sys.stderr.write("\n")
+    sys.stderr.flush()
 
 
 def get_catalog_size() -> int:

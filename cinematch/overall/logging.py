@@ -46,6 +46,24 @@ PAYLOAD_FIELDS = (
     "rule",
     "found",
     "deleted_counts",
+    # Поля событий загрузки каталога и очистки сессий — data/140 §1:
+    # `CatalogLoadStarted`, `MoviesUpserted`, `CatalogLoadFinished`, `SessionExpired`.
+    "load_id",
+    "pages",
+    "from_year",
+    "min_votes",
+    "resumed",
+    "status",
+    "pages_done",
+    "movies_upserted",
+    "movies_skipped",
+    "last_page",
+    "duration_s",
+    "page",
+    "movies",
+    "inserted",
+    "updated",
+    "sessions",
 )
 
 

@@ -26,6 +26,7 @@ from cinematch.data.api import (
     save_user_settings,
     search_movie,
 )
+from cinematch.data.clients.tmdb import IngestError
 from cinematch.data.models import SessionRow, User
 from cinematch.data.schemas import Weather
 from cinematch.overall.contracts import SessionState
@@ -199,8 +200,8 @@ def test_empty_user_data_is_empty(data_db, session: Session) -> None:
 
 
 @pytest.mark.parametrize(("name",), [("",), ("   ",), ("я" * 101,)])
-def test_resolve_city_validates_name_before_stub(data_db, name: str) -> None:
-    """`name` проверяется по контракту §4.12, даже пока клиента Open-Meteo нет."""
+def test_resolve_city_validates_name(data_db, name: str) -> None:
+    """`name` проверяется по контракту §4.12 до обращения к Open-Meteo."""
     with pytest.raises(ToolError) as error:
         resolve_city(name)
 
@@ -219,22 +220,29 @@ def test_resolve_city_validates_name_before_stub(data_db, name: str) -> None:
         {"resume": "yes"},
     ],
 )
-def test_ingest_movies_validates_params_before_stub(data_db, kwargs: dict) -> None:
-    """Границы `ingest_movies` — контракт §4.19, проверяются до заглушки."""
+def test_ingest_movies_validates_params(data_db, kwargs: dict) -> None:
+    """Границы `ingest_movies` — контракт §4.19, проверяются до запроса к TMDB."""
     with pytest.raises(ToolError) as error:
         ingest_movies(**kwargs)
 
     assert error.value.code == "INVALID_PARAM"
 
 
-def test_stubs_raise_not_implemented_with_valid_params(data_db) -> None:
-    """С корректными параметрами заглушки честно падают `NotImplementedError`."""
-    with pytest.raises(NotImplementedError):
+def test_ingest_movies_requires_tmdb_key(data_db, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Без `TMDB_API_KEY` загрузка останавливается: `CONFIG_MISSING` (data/110 §2)."""
+    monkeypatch.delenv("TMDB_API_KEY", raising=False)
+    monkeypatch.setattr("cinematch.data.api._parse_env_file", lambda _path: {})
+
+    with pytest.raises(IngestError) as error:
         ingest_movies()
-    with pytest.raises(NotImplementedError):
-        resolve_city("Москва")
-    with pytest.raises(NotImplementedError):
-        get_weather(TEST_USER)
+
+    assert error.value.reason == "unauthorized"
+    assert "CONFIG_MISSING TMDB_API_KEY" in error.value.message
+
+
+def test_weather_without_city_is_none(data_db) -> None:
+    """Без согласия и города погоды нет: `None` без запроса (§4.3, §8.4)."""
+    assert get_weather(TEST_USER) is None
 
 
 def test_weather_type_matches_data_130() -> None:
