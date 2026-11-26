@@ -2,17 +2,25 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
+from cinematch.data.db import init_database
 from cinematch.interfaces.api.app import create_app
 
 
 @pytest.fixture
-def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
+def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> TestClient:
     monkeypatch.setenv("TMDB_API_KEY", "tmdb")
     monkeypatch.setenv("LLM_API_KEY", "llm")
     monkeypatch.setenv("LLM_MODEL", "model")
+    # Реальная база: health спрашивает `SELECT COUNT(*) FROM movies`
+    # (data/130 §4.20), поэтому схема должна быть создана (build.md §3).
+    db_path = tmp_path / "cinematch.db"
+    monkeypatch.setenv("CINEMATCH_DB_PATH", str(db_path))
+    init_database(db_path)
     return TestClient(create_app())
 
 
