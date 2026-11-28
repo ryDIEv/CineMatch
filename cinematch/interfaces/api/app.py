@@ -1,8 +1,7 @@
 """FastAPI-приложение CineMatch: маршруты `/api/v1` (documents/ui/130).
 
-Порядок старта backend — build.md §3. На каркасе выполняются шаги 1, 3, 6 и 7
-(конфигурация, готовность базы, маршруты, запись `backend ready`); промпты,
-миграции и `purge_expired()` приходят вместе с модулями в следующих задачах.
+Порядок старта backend — build.md §3: конфигурация, готовность базы, маршруты,
+запись `backend ready`. Промпты идут вместе с модулем агентов в следующей задаче.
 """
 
 from __future__ import annotations
@@ -13,15 +12,21 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from cinematch.data.api import get_catalog_size
+from cinematch.data.db import init_database
 from cinematch.overall.config import Settings, load_settings
 from cinematch.overall.logging import write_event
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Проверить конфигурацию до первого запроса и записать готовность."""
+    """Проверить конфигурацию, подготовить базу и записать готовность.
+
+    `init_database()` — стык модулей: шаги 3–5 порядка старта (build.md §3)
+    выполняет модуль данных, вызывает их API-слой (data/120 §9, §4.18).
+    """
     settings: Settings = load_settings()
     app.state.settings = settings
+    init_database(settings.db_path)
     write_event("backend_ready", payload={"stage": "startup", "count": get_catalog_size()})
     yield
 

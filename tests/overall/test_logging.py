@@ -93,3 +93,54 @@ def test_write_event_is_one_json_line() -> None:
     lines = stream.getvalue().splitlines()
     assert len(lines) == 1
     assert json.loads(lines[0]) == record
+
+
+def test_catalog_load_payload_fields_are_allowed() -> None:
+    """Поля событий загрузки и очистки проходят белый список — data/140 §1."""
+    record = build_record(
+        "CatalogLoadFinished",
+        payload={
+            "load_id": 3,
+            "status": "completed",
+            "pages_done": 500,
+            "movies_upserted": 9987,
+            "movies_skipped": 13,
+            "last_page": 500,
+            "duration_s": 412.8,
+        },
+    )
+
+    assert record["user_id"] is None
+    assert record["payload"] == {
+        "load_id": 3,
+        "status": "completed",
+        "pages_done": 500,
+        "movies_upserted": 9987,
+        "movies_skipped": 13,
+        "last_page": 500,
+        "duration_s": 412.8,
+    }
+
+
+def test_movies_upserted_and_session_expired_fields_are_allowed() -> None:
+    """`MoviesUpserted` и `SessionExpired` — те же правила (data/140 §1)."""
+    page = build_record(
+        "MoviesUpserted",
+        payload={
+            "load_id": 3,
+            "page": 7,
+            "movies": 20,
+            "inserted": 12,
+            "updated": 8,
+        },
+    )
+    expired = build_record("SessionExpired", payload={"sessions": 4})
+
+    assert page["payload"] == {
+        "load_id": 3,
+        "page": 7,
+        "movies": 20,
+        "inserted": 12,
+        "updated": 8,
+    }
+    assert expired["payload"] == {"sessions": 4}
